@@ -491,7 +491,30 @@ clearAllBtn.addEventListener('click', async () => {
     sortSelect.addEventListener('change', ()=>{ if(unsubscribeExpenses) setupExpenseListener() })
 
   </script>
+  
+<!-- 🚨 Fallback for Older Browsers (no modules support) -->
+<script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script nomodule>
+  // Firebase config
+  var firebaseConfig = {
+  apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
+  authDomain: "dhansplit.firebaseapp.com",
+  projectId: "dhansplit",
+  storageBucket: "dhansplit.firebasestorage.app",
+  messagingSenderId: "1042555508326",
+  appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
+  measurementId: "G-X8QMR709D2"
+};
+
+  // Initialize Firebase (v8 style)
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+
+  console.log("Loaded with nomodule fallback 🚀");
+</script>
 </body>
 </html>
+
 
 
