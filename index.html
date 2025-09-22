@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DhanSplit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* subtle neumorphism-ish surface for dark */
+    .soft-card{background: rgba(255,255,255,0.02); box-shadow: 8px 8px 16px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.01);} 
+    .glass { backdrop-filter: blur(6px); }
+  </style>
+</head>
+<body class="bg-[#0b0f14] text-slate-200 min-h-screen antialiased">
+  <main class="max-w-md mx-auto p-4">
+    <!-- Auth area -->
+    <section id="auth" class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-semibold">DhanSplit</h1>
+        <button id="sign-out" class="hidden px-3 py-1 rounded-md soft-card">Logout</button>
+      </div>
+
+      <div id="login-card" class="soft-card p-4 rounded-2xl">
+        <p class="text-sm text-slate-400 mb-3">Sign in to start splitting expenses with your roommate.</p>
+        <button id="google-signin" class="w-full py-3 rounded-xl glass border border-slate-700 text-sm font-medium">Sign in with Google</button>
+      </div>
+
+      <div id="friend-card" class="hidden soft-card p-4 rounded-2xl">
+        <p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
+        <div class="mt-2 flex gap-2">
+          <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" placeholder="friend@example.com" />
+          <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
+        </div>
+        <p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden mt-6 space-y-4">
+      <div class="soft-card p-4 rounded-2xl">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-xs text-slate-400">Total Spent</div>
+            <div id="total-spent" class="text-2xl font-bold">₹0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-400">You</div>
+            <div id="your-spent" class="font-semibold">₹0</div>
+            <div class="text-xs text-slate-400">Roommate</div>
+            <div id="friend-spent" class="font-semibold">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add expense form -->
+      <div class="soft-card p-4 rounded-2xl">
+        <div class="flex items-center gap-2 mb-3">
+          <input id="amount" type="number" placeholder="Amount (₹)" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" />
+          <button id="add-expense" class="px-3 py-2 rounded-lg soft-card">Add</button>
+        </div>
+        <input id="note" placeholder="Note (eg. Vegetables)" class="w-full bg-transparent border border-slate-700 rounded-lg p-2 text-sm mb-2" />
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <label><input id="split-with" type="checkbox" checked class="mr-2"/> Split equally</label>
+        </div>
+      </div>
+
+      <!-- Sorting & filters -->
+      <div class="flex gap-2">
+        <select id="sort" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm">
+          <option value="date-desc">Date (newest)</option>
+          <option value="date-asc">Date (oldest)</option>
+          <option value="amount-desc">Amount (high)</option>
+          <option value="amount-asc">Amount (low)</option>
+          <option value="unpaid-first">Unpaid first</option>
+        </select>
+      </div>
+<button id="clear-all" class="px-3 py-2 rounded-lg soft-card text-sm mt-2">Clear All Expenses</button>
+
+      <!-- Expenses list -->
+      <div id="expenses-list" class="space-y-3"></div>
+
+    </section>
+
+    <footer class="mt-6 text-xs text-slate-500 text-center">by Md Imran Siddiqui•</footer>
+  </main>
+
+  <script type="module">
+    // Firebase v9 modular (CDN imports)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js'
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js'
+    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, query, where, orderBy, getDocs, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js'
+
+    // TODO: replace with your firebase config
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
+  authDomain: "dhansplit.firebaseapp.com",
+  projectId: "dhansplit",
+  storageBucket: "dhansplit.firebasestorage.app",
+  messagingSenderId: "1042555508326",
+  appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
+  measurementId: "G-X8QMR709D2"
+};
+
+    const app = initializeApp(firebaseConfig)
+    const auth = getAuth(app)
+    const db = getFirestore(app)
+    const provider = new GoogleAuthProvider()
+
+    // UI refs
+    const loginCard = document.getElementById('login-card')
+    const googleBtn = document.getElementById('google-signin')
+    const signOutBtn = document.getElementById('sign-out')
+    const friendCard = document.getElementById('friend-card')
+    const friendEmailInput = document.getElementById('friend-email')
+    const saveFriendBtn = document.getElementById('save-friend')
+    const friendSaved = document.getElementById('friend-saved')
+
+    const dashboard = document.getElementById('dashboard')
+    const totalSpentEl = document.getElementById('total-spent')
+    const yourSpentEl = document.getElementById('your-spent')
+    const friendSpentEl = document.getElementById('friend-spent')
+    const amountInput = document.getElementById('amount')
+    const noteInput = document.getElementById('note')
+    const addBtn = document.getElementById('add-expense')
+    const expensesList = document.getElementById('expenses-list')
+    const sortSelect = document.getElementById('sort')
+
+    let currentUser = null
+    let friendEmail = null
+    let pairId = null
+    let unsubscribeExpenses = null
+
+    // helpers
+    function makePairId(a,b){
+      if(!a||!b) return null
+      const aL=a.toLowerCase().trim(), bL=b.toLowerCase().trim()
+      return [aL,bL].sort().join('_')
+    }
+
+    // Auth flows
+    googleBtn.addEventListener('click', async ()=>{
+      try{
+        await signInWithPopup(auth, provider)
+      }catch(e){ console.error(e); alert('Sign in failed') }
+    })
+
+    signOutBtn.addEventListener('click', ()=> signOut(auth))
+
+onAuthStateChanged(auth, async user => {
+  currentUser = user
+  if(user){
+    loginCard.classList.add('hidden')
+    signOutBtn.classList.remove('hidden')
+    friendCard.classList.remove('hidden')
+    dashboard.classList.remove('hidden')
+
+    // **load from localStorage first**
+    const savedEmail = localStorage.getItem('friendEmail')
+    if(savedEmail){
+      friendEmail = savedEmail
+      friendEmailInput.value = friendEmail
+      friendSaved.classList.remove('hidden')
+      setupExpenseListener()
+    } else {
+      // fallback: load from Firestore
+      try{
+        const read = await fetchUserDoc(user.uid)
+        if(read && read.friendEmail){
+          friendEmail = read.friendEmail
+          friendEmailInput.value = friendEmail
+          friendSaved.classList.remove('hidden')
+          setupExpenseListener()
+        }
+      }catch(e){console.log('no user doc yet')}
+    }
+
+  } else {
+    loginCard.classList.remove('hidden')
+    signOutBtn.classList.add('hidden')
+    friendCard.classList.add('hidden')
+    dashboard.classList.add('hidden')
+    if(unsubscribeExpenses) unsubscribeExpenses()
+  }
+})
+
+    async function fetchUserDoc(uid){
+      const d = doc(db,'users',uid)
+      try{
+        // get via getDocs isn't ideal but easier in this single file example
+        const snap = await getDocs(query(collection(db,'users'), where('uid','==',uid)))
+        if(!snap.empty){
+          const docdata = snap.docs[0].data()
+          return docdata
+        }
+      }catch(e){console.error(e)}
+      return null
+    }
+
+saveFriendBtn.addEventListener('click', async ()=> {
+  const val = friendEmailInput.value.trim().toLowerCase()
+  if(!val || !currentUser){ alert('enter valid email'); return }
+
+  friendEmail = val
+  pairId = makePairId(currentUser.email, friendEmail)
+
+  // save to Firestore
+  await setDoc(doc(db, 'users', currentUser.uid), {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    friendEmail,
+    pairId,
+    updatedAt: serverTimestamp()
+  })
+
+  // **save to localStorage**
+  localStorage.setItem('friendEmail', friendEmail)
+
+  friendSaved.classList.remove('hidden')
+  setupExpenseListener()
+})
+const clearAllBtn = document.getElementById('clear-all')
+
+clearAllBtn.addEventListener('click', async () => {
+  if(!currentUser || !friendEmail) return
+  if(!confirm('Are you sure you want to delete ALL expenses for this friend?')) return
+
+  // fetch all expenses for this pair
+  const q = query(collection(db, 'expenses'), where('pairId','==',pairId))
+  const snap = await getDocs(q)
+  const batchDeletes = snap.docs.map(docSnap => deleteDoc(doc(db,'expenses',docSnap.id)))
+  await Promise.all(batchDeletes)
+})
+
+
+    // listener for expenses for this pair
+    async function setupExpenseListener(){
+      if(!currentUser || !friendEmail) return
+      pairId = makePairId(currentUser.email, friendEmail)
+      // unsubscribe previous
+      if(unsubscribeExpenses) unsubscribeExpenses()
+      const expensesQ = query(collection(db,'expenses'), where('pairId','==',pairId), orderBy('createdAt','desc'))
+      unsubscribeExpenses = onSnapshot(expensesQ, snap=>{
+        const items = []
+        snap.forEach(doc=> items.push({ id: doc.id, ...doc.data() }))
+        renderExpenses(items)
+      })
+    }
+
+    // add expense
+    addBtn.addEventListener('click', async ()=>{
+      const amount = parseFloat(amountInput.value)
+      const note = noteInput.value || ''
+      if(!amount || !currentUser || !friendEmail){ alert('fill amount and friend email'); return }
+      const docRef = await addDoc(collection(db,'expenses'), {
+        amount, note, ownerUid: currentUser.uid, ownerEmail: currentUser.email, pairId, paid: false, createdAt: serverTimestamp()
+      })
+      amountInput.value = ''
+      noteInput.value = ''
+    })
+
+    // render and calculations
+    function renderExpenses(items){
+      // sorting handled by query but can re-sort locally if user changed sort
+      const sort = sortSelect.value
+      items = items.slice()
+      if(sort==='date-asc') items.reverse()
+      if(sort==='amount-desc') items.sort((a,b)=>b.amount-a.amount)
+      if(sort==='amount-asc') items.sort((a,b)=>a.amount-b.amount)
+      if(sort==='unpaid-first') items.sort((a,b)=> (a.paid===b.paid)?0:(a.paid?1:-1))
+
+      expensesList.innerHTML = ''
+      let total = 0, you = 0
+      items.forEach(it=>{
+        total += it.amount
+        if(it.ownerEmail === currentUser.email) you += it.amount
+
+        const card = document.createElement('div')
+        card.className = 'soft-card p-3 rounded-xl'
+        card.innerHTML = `
+          <div class=\"flex justify-between items-start\"> 
+            <div>
+              <div class=\"text-sm font-semibold\">₹${it.amount.toFixed(2)}</div>
+              <div class=\"text-xs text-slate-400\">${it.note || ''}</div>
+              <div class=\"text-xxs text-slate-500 mt-2\">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
+            </div>
+            <div class=\"text-right text-xs\">
+              <div class=\"mb-2 ${it.paid? 'text-green-300':'text-amber-300'}\">${it.paid? 'Paid':'Unpaid'}</div>
+              <div class=\"flex gap-2\">
+                ${it.ownerUid === currentUser.uid ? '<button data-edit='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Edit</button><button data-delete='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Delete</button><button data-paid='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>' : ''}
+              </div>
+            </div>
+          </div>
+        `
+        expensesList.appendChild(card)
+      })
+
+      const friend = total - you
+      const split = total/2
+      const roommateOwes = Math.round((you - split)*100)/100
+
+      totalSpentEl.textContent = `₹${total.toFixed(2)}`
+      yourSpentEl.textContent = `₹${you.toFixed(2)}`
+      friendSpentEl.textContent = `₹${friend.toFixed(2)}`
+
+      // attach event handlers for actions
+      document.querySelectorAll('[data-delete]').forEach(btn=> btn.addEventListener('click', async (e)=>{
+        const id = btn.getAttribute('data-delete')
+        if(confirm('Delete this expense?')){
+          await deleteDoc(doc(db,'expenses',id))
+        }
+      }))
+
+      document.querySelectorAll('[data-paid]').forEach(btn=> btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-paid')
+        const ref = doc(db,'expenses',id)
+        // toggle paid state (simple read->update flow)
+        // (in real app use transaction)
+        const snap = await getDocs(query(collection(db,'expenses'), where('__name__','==',id)))
+        if(!snap.empty){
+          const data = snap.docs[0].data()
+          await updateDoc(ref, { paid: !data.paid, updatedAt: serverTimestamp() })
+        }
+      }))
+
+      document.querySelectorAll('[data-edit]').forEach(btn=> btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-edit')
+        const newNote = prompt('Edit note')
+        const newAmount = prompt('Edit amount')
+        if(newNote !== null && newAmount !== null){
+          const ref = doc(db,'expenses',id)
+          await updateDoc(ref, { note: newNote, amount: parseFloat(newAmount), updatedAt: serverTimestamp() })
+        }
+      }))
+    }
+
+    // local change of sort
+    sortSelect.addEventListener('change', ()=>{ if(unsubscribeExpenses) setupExpenseListener() })
+
+  </script>
+</body>
+</html>
