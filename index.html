@@ -308,6 +308,7 @@ googleBtn.addEventListener('click', async ()=>{
 getRedirectResult(auth).then((result) => {
   if(result && result.user){
     console.log("Signed in after redirect:", result.user.email);
+        window.location.href = "dhansplit://authcallback";
   }
 }).catch(err => console.error("Redirect Error:", err));
 
