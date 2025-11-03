@@ -201,6 +201,8 @@
             <div id="your-spent" class="font-semibold">₹0</div>
             <div class="text-xs text-slate-400">Roommate</div>
             <div id="friend-spent" class="font-semibold">₹0</div>
+            <div class="text-xs text-slate-400">Roommate owes you</div>
+            <div id="roommate-owes" class="font-semibold">₹0</div>
           </div>
         </div>
       </div>
@@ -421,10 +423,13 @@ clearAllBtn.addEventListener('click', async () => {
       if(sort==='amount-desc') items.sort((a,b)=>b.amount-a.amount)
       if(sort==='amount-asc') items.sort((a,b)=>a.amount-b.amount)
       if(sort==='unpaid-first') items.sort((a,b)=> (a.paid===b.paid)?0:(a.paid?1:-1))
+      const roommate_owes = document.getElementById('roommate-owes');
 
       expensesList.innerHTML = ''
-      let total = 0, you = 0
+      let total = 0, you = 0 ,owes=0
       items.forEach(it=>{
+        owes+= it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount/2 : -it.amount/2
+        roommate_owes.textContent = `₹${owes.toFixed(2)}`;
         total += it.amount
         if(it.ownerEmail === currentUser.email) you += it.amount
 
@@ -495,7 +500,7 @@ clearAllBtn.addEventListener('click', async () => {
 <!-- 🚨 Fallback for Older Browsers (no modules support) -->
 <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script nomodule>
+<!-- <script nomodule>
   // Firebase config
   var firebaseConfig = {
   apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
@@ -512,7 +517,7 @@ clearAllBtn.addEventListener('click', async () => {
   var auth = firebase.auth();
 
   console.log("Loaded with nomodule fallback 🚀");
-</script>
+</script> -->
 </body>
 </html>
 
