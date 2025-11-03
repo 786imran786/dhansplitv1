@@ -416,42 +416,56 @@ clearAllBtn.addEventListener('click', async () => {
 
     // render and calculations
     function renderExpenses(items){
-      // sorting handled by query but can re-sort locally if user changed sort
-      const sort = sortSelect.value
-      items = items.slice()
-      if(sort==='date-asc') items.reverse()
-      if(sort==='amount-desc') items.sort((a,b)=>b.amount-a.amount)
-      if(sort==='amount-asc') items.sort((a,b)=>a.amount-b.amount)
-      if(sort==='unpaid-first') items.sort((a,b)=> (a.paid===b.paid)?0:(a.paid?1:-1))
-      const roommate_owes = document.getElementById('roommate-owes');
+      const sort = sortSelect.value;
+  items = items.slice();
+  if (sort === 'date-asc') items.reverse();
+  if (sort === 'amount-desc') items.sort((a, b) => b.amount - a.amount);
+  if (sort === 'amount-asc') items.sort((a, b) => a.amount - b.amount);
+  if (sort === 'unpaid-first') items.sort((a, b) => (a.paid === b.paid) ? 0 : (a.paid ? 1 : -1));
 
-      expensesList.innerHTML = ''
-      let total = 0, you = 0 ,owes=0
-      items.forEach(it=>{
-        owes+= it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount/2 : -it.amount/2
-        roommate_owes.textContent = `₹${owes.toFixed(2)}`;
-        total += it.amount
-        if(it.ownerEmail === currentUser.email) you += it.amount
+  const roommate_owes = document.getElementById('roommate-owes');
+  expensesList.innerHTML = '';
+  let total = 0, you = 0, owes = 0;
 
-        const card = document.createElement('div')
-        card.className = 'soft-card p-3 rounded-xl'
-        card.innerHTML = `
-          <div class=\"flex justify-between items-start\"> 
-            <div>
-              <div class=\"text-sm font-semibold\">₹${it.amount.toFixed(2)}</div>
-              <div class=\"text-xs text-slate-400\">${it.note || ''}</div>
-              <div class=\"text-xxs text-slate-500 mt-2\">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
-            </div>
-            <div class=\"text-right text-xs\">
-              <div class=\"mb-2 ${it.paid? 'text-green-300':'text-amber-300'}\">${it.paid? 'Paid':'Unpaid'}</div>
-              <div class=\"flex gap-2\">
-                ${it.ownerUid === currentUser.uid ? '<button data-edit='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Edit</button><button data-delete='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Delete</button><button data-paid='+it.id+' class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>' : ''}
-              </div>
-            </div>
+  items.forEach(it => {
+    owes += it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount / 2 : -it.amount / 2;
+    roommate_owes.textContent = `₹${owes.toFixed(2)}`;
+
+    // 🌈 Dynamic color update
+    if (owes < 0) {
+      roommate_owes.style.color = 'red';   // You owe less → good → green
+    } else if (owes > 0) {
+      roommate_owes.style.color = 'green';     // You owe more → bad → red
+    } else {
+      roommate_owes.style.color = 'gray';    // Neutral
+    }
+
+    total += it.amount;
+    if (it.ownerEmail === currentUser.email) you += it.amount;
+
+    const card = document.createElement('div');
+    card.className = 'soft-card p-3 rounded-xl';
+    card.innerHTML = `
+      <div class="flex justify-between items-start"> 
+        <div>
+          <div class="text-sm font-semibold">₹${it.amount.toFixed(2)}</div>
+          <div class="text-xs text-slate-400">${it.note || ''}</div>
+          <div class="text-xxs text-slate-500 mt-2">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
+        </div>
+        <div class="text-right text-xs">
+          <div class="mb-2 ${it.paid ? 'text-green-300' : 'text-amber-300'}">${it.paid ? 'Paid' : 'Unpaid'}</div>
+          <div class="flex gap-2">
+            ${it.ownerUid === currentUser.uid
+              ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
+                 <button data-delete=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Delete</button>
+                 <button data-paid=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>`
+              : ''}
           </div>
-        `
-        expensesList.appendChild(card)
-      })
+        </div>
+      </div>
+    `;
+    expensesList.appendChild(card);
+  });
 
       const friend = total - you
       const split = total/2
