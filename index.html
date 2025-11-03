@@ -296,56 +296,57 @@ const firebaseConfig = {
       return [aL,bL].sort().join('_')
     }
 
-    // Auth flows
-googleBtn.addEventListener('click', async ()=>{
-  try{
-    await signInWithRedirect(auth, provider)
-  }catch(e){ console.error(e); alert('Sign in failed') }
-})
-
-    signOutBtn.addEventListener('click', ()=> signOut(auth))
-// ✅ Restore session after redirect
-getRedirectResult(auth).then((result) => {
-  if(result && result.user){
-    console.log("Signed in after redirect:", result.user.email);
-        window.location.href = "dhansplit://authcallback";
-  }
-}).catch(err => console.error("Redirect Error:", err));
-
-onAuthStateChanged(auth, async user => {
-  currentUser = user
-  if(user){
-    loginCard.classList.add('hidden')
-    signOutBtn.classList.remove('hidden')
-    friendCard.classList.remove('hidden')
-    dashboard.classList.remove('hidden')
-
-    const savedEmail = localStorage.getItem('friendEmail')
-    if(savedEmail){
-      friendEmail = savedEmail
-      friendEmailInput.value = friendEmail
-      friendSaved.classList.remove('hidden')
-      setupExpenseListener()
-    } else {
+        // Auth flows
+    googleBtn.addEventListener('click', async ()=>{
       try{
-        const read = await fetchUserDoc(user.uid)
-        if(read && read.friendEmail){
-          friendEmail = read.friendEmail
+        await signInWithRedirect(auth, provider)
+      }catch(e){ console.error(e); alert('Sign in failed') }
+    })
+
+        signOutBtn.addEventListener('click', ()=> signOut(auth))
+    // ✅ Restore session after redirect
+    getRedirectResult(auth).then((result) => {
+      if(result && result.user){
+        console.log("Signed in after redirect:", result.user.email);
+window.location.replace("dhansplit://authcallback");
+
+      }
+    }).catch(err => console.error("Redirect Error:", err));
+
+    onAuthStateChanged(auth, async user => {
+      currentUser = user
+      if(user){
+        loginCard.classList.add('hidden')
+        signOutBtn.classList.remove('hidden')
+        friendCard.classList.remove('hidden')
+        dashboard.classList.remove('hidden')
+
+        const savedEmail = localStorage.getItem('friendEmail')
+        if(savedEmail){
+          friendEmail = savedEmail
           friendEmailInput.value = friendEmail
           friendSaved.classList.remove('hidden')
           setupExpenseListener()
+        } else {
+          try{
+            const read = await fetchUserDoc(user.uid)
+            if(read && read.friendEmail){
+              friendEmail = read.friendEmail
+              friendEmailInput.value = friendEmail
+              friendSaved.classList.remove('hidden')
+              setupExpenseListener()
+            }
+          }catch(e){console.log('no user doc yet')}
         }
-      }catch(e){console.log('no user doc yet')}
-    }
 
-  } else {
-    loginCard.classList.remove('hidden')
-    signOutBtn.classList.add('hidden')
-    friendCard.classList.add('hidden')
-    dashboard.classList.add('hidden')
-    if(unsubscribeExpenses) unsubscribeExpenses()
-  }
-})
+      } else {
+        loginCard.classList.remove('hidden')
+        signOutBtn.classList.add('hidden')
+        friendCard.classList.add('hidden')
+        dashboard.classList.add('hidden')
+        if(unsubscribeExpenses) unsubscribeExpenses()
+      }
+    })
 
 
     async function fetchUserDoc(uid){
