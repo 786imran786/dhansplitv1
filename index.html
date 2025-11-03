@@ -294,11 +294,28 @@ const firebaseConfig = {
     }
 
     // Auth flows
-    googleBtn.addEventListener('click', async ()=>{
-      try{
-        await signInWithPopup(auth, provider)
-      }catch(e){ console.error(e); alert('Sign in failed') }
-    })
+import { signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js'
+
+// When user clicks Sign in
+googleBtn.addEventListener('click', async () => {
+  try {
+    await signInWithRedirect(auth, provider)
+  } catch (e) {
+    console.error(e)
+    alert('Redirect sign-in failed')
+  }
+})
+
+// After redirect completes
+getRedirectResult(auth)
+  .then((result) => {
+    if (result && result.user) {
+      console.log('User signed in:', result.user.email)
+    }
+  })
+  .catch((error) => {
+    console.error('Redirect result error:', error)
+  })
 
     signOutBtn.addEventListener('click', ()=> signOut(auth))
 
