@@ -179,12 +179,25 @@
       </div>
 
       <div id="friend-card" class="hidden soft-card p-4 rounded-2xl">
-        <p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
-        <div class="mt-2 flex gap-2">
-          <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" placeholder="friend@example.com" />
-          <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
-        </div>
-        <p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
+<p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
+
+<div class="mt-2 space-y-2">
+  <div class="flex gap-2">
+    <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" placeholder="friend@example.com" />
+    <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
+  </div>
+
+  <!-- Dropdown for previously added friends -->
+<select 
+  id="friend-history" 
+  class="w-full bg-[#0f131a] border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-600">
+  <option value="">Select from previous friends</option>
+</select>
+
+</div>
+
+<p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
+
       </div>
     </section>
 
@@ -280,6 +293,7 @@ const firebaseConfig = {
     const addBtn = document.getElementById('add-expense')
     const expensesList = document.getElementById('expenses-list')
     const sortSelect = document.getElementById('sort')
+    const friendHistorySelect = document.getElementById('friend-history')
 
     let currentUser = null
     let friendEmail = null
@@ -317,6 +331,7 @@ onAuthStateChanged(auth, async user => {
       friendEmailInput.value = friendEmail
       friendSaved.classList.remove('hidden')
       setupExpenseListener()
+      populateFriendHistory()
     } else {
       // fallback: load from Firestore
       try{
@@ -354,7 +369,7 @@ onAuthStateChanged(auth, async user => {
 
 saveFriendBtn.addEventListener('click', async ()=> {
   const val = friendEmailInput.value.trim().toLowerCase()
-  if(!val || !currentUser){ alert('enter valid email'); return }
+  if(!val || !currentUser){ alert('Enter valid email'); return }
 
   friendEmail = val
   pairId = makePairId(currentUser.email, friendEmail)
@@ -368,12 +383,22 @@ saveFriendBtn.addEventListener('click', async ()=> {
     updatedAt: serverTimestamp()
   })
 
-  // **save to localStorage**
+  // 🧠 Save to localStorage (multiple)
+  let existingFriends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
+  if (!existingFriends.includes(friendEmail)) {
+    existingFriends.push(friendEmail)
+    localStorage.setItem('friendEmails', JSON.stringify(existingFriends))
+  }
+
+  // Also save current friend for auto-load next time
   localStorage.setItem('friendEmail', friendEmail)
 
   friendSaved.classList.remove('hidden')
+  populateFriendHistory()
   setupExpenseListener()
 })
+
+
 const clearAllBtn = document.getElementById('clear-all')
 
 clearAllBtn.addEventListener('click', async () => {
@@ -505,6 +530,26 @@ clearAllBtn.addEventListener('click', async () => {
         }
       }))
     }
+function populateFriendHistory(){
+  friendHistorySelect.innerHTML = '<option value="">Select from previous friends</option>'
+  const friends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
+  friends.forEach(email=>{
+    const opt = document.createElement('option')
+    opt.value = email
+    opt.textContent = email
+    friendHistorySelect.appendChild(opt)
+  })
+}
+friendHistorySelect.addEventListener('change', ()=>{
+  const val = friendHistorySelect.value
+  if(val){
+    friendEmail = val
+    friendEmailInput.value = val
+    localStorage.setItem('friendEmail', val)
+    friendSaved.classList.remove('hidden')
+    setupExpenseListener()
+  }
+})
 
     // local change of sort
     sortSelect.addEventListener('change', ()=>{ if(unsubscribeExpenses) setupExpenseListener() })
