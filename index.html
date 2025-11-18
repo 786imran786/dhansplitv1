@@ -471,6 +471,8 @@ clearAllBtn.addEventListener('click', async () => {
 const formatted = ts
   ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
   : "—";
+  const card = document.createElement('div');
+  card.className = 'soft-card p-3 rounded-xl';
 
 card.innerHTML = `
   <div class="flex justify-between items-start"> 
