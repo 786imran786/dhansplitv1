@@ -467,28 +467,33 @@ clearAllBtn.addEventListener('click', async () => {
 
     total += it.amount;
     if (it.ownerEmail === currentUser.email) you += it.amount;
+    const ts = it.createdAt?.toDate ? it.createdAt.toDate() : null;
+const formatted = ts
+  ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  : "—";
 
-    const card = document.createElement('div');
-    card.className = 'soft-card p-3 rounded-xl';
-    card.innerHTML = `
-      <div class="flex justify-between items-start"> 
-        <div>
-          <div class="text-sm font-semibold">₹${it.amount.toFixed(2)}</div>
-          <div class="text-xs text-slate-400">${it.note || ''}</div>
-          <div class="text-xxs text-slate-500 mt-2">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
-        </div>
-        <div class="text-right text-xs">
-          <div class="mb-2 ${it.paid ? 'text-green-300' : 'text-amber-300'}">${it.paid ? 'Paid' : 'Unpaid'}</div>
-          <div class="flex gap-2">
-            ${it.ownerUid === currentUser.uid
-              ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
-                 <button data-delete=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Delete</button>
-                 <button data-paid=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>`
-              : ''}
-          </div>
-        </div>
+card.innerHTML = `
+  <div class="flex justify-between items-start"> 
+    <div>
+      <div class="text-sm font-semibold">₹${it.amount.toFixed(2)}</div>
+      <div class="text-xs text-slate-400">${it.note || ''}</div>
+      <div class="text-xxs text-slate-500 mt-1">${formatted}</div>
+      <div class="text-xxs text-slate-500 mt-1">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
+    </div>
+
+    <div class="text-right text-xs">
+      <div class="mb-2 ${it.paid ? 'text-green-300' : 'text-amber-300'}">${it.paid ? 'Paid' : 'Unpaid'}</div>
+      <div class="flex gap-2">
+        ${it.ownerUid === currentUser.uid
+          ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
+             <button data-delete=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Delete</button>
+             <button data-paid=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>`
+          : ''
+        }
       </div>
-    `;
+    </div>
+  </div>
+`;
     expensesList.appendChild(card);
   });
 
