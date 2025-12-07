@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en" class="dark">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
@@ -12,141 +13,183 @@
       -webkit-text-size-adjust: 100%;
       -webkit-tap-highlight-color: transparent;
     }
-    
+
     body {
       min-height: 100vh;
-      min-height: 100dvh; /* Dynamic viewport height for mobile */
+      min-height: 100dvh;
+      /* Dynamic viewport height for mobile */
       overflow-x: hidden;
     }
-    
+
     /* Improved soft card for all devices */
     .soft-card {
-      background: rgba(255,255,255,0.02); 
-      box-shadow: 8px 8px 16px rgba(0,0,0,0.6), -6px -6px 12px rgba(255,255,255,0.01);
-      border: 1px solid rgba(255,255,255,0.03);
+      background: rgba(255, 255, 255, 0.02);
+      box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.03);
     }
-    
-    .glass { 
-      backdrop-filter: blur(6px); 
-      -webkit-backdrop-filter: blur(6px); /* Safari support */
+
+    .glass {
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      /* Safari support */
     }
-    
+
     /* Mobile-first responsive design */
     main {
       width: 100%;
-      max-width: 28rem; /* 448px */
+      max-width: 28rem;
+      /* 448px */
       margin: 0 auto;
       padding: 1rem;
       box-sizing: border-box;
     }
-    
+
     /* Touch-friendly button sizes */
-    button, input, select {
-      min-height: 44px; /* Minimum touch target size */
-      font-size: 16px; /* Prevents zoom on iOS */
+    button,
+    input,
+    select {
+      min-height: 44px;
+      /* Minimum touch target size */
+      font-size: 16px;
+      /* Prevents zoom on iOS */
     }
-    
+
     /* Improved input fields for mobile */
-    input, select {
+    input,
+    select {
       width: 100%;
       box-sizing: border-box;
     }
-    
+
     /* Responsive typography */
-    h1 { font-size: clamp(1.25rem, 4vw, 1.5rem); }
-    .text-2xl { font-size: clamp(1.5rem, 5vw, 1.875rem); }
-    .text-xs { font-size: clamp(0.75rem, 3vw, 0.875rem); }
-    .text-sm { font-size: clamp(0.875rem, 3.5vw, 1rem); }
-    
+    h1 {
+      font-size: clamp(1.25rem, 4vw, 1.5rem);
+    }
+
+    .text-2xl {
+      font-size: clamp(1.5rem, 5vw, 1.875rem);
+    }
+
+    .text-xs {
+      font-size: clamp(0.75rem, 3vw, 0.875rem);
+    }
+
+    .text-sm {
+      font-size: clamp(0.875rem, 3.5vw, 1rem);
+    }
+
     /* Flexible spacing */
-    .space-y-4 > * + * {
+    .space-y-4>*+* {
       margin-top: clamp(1rem, 3vw, 1.5rem);
     }
-    
-    .p-4 { padding: clamp(1rem, 3vw, 1.5rem); }
-    .p-3 { padding: clamp(0.75rem, 2.5vw, 1rem); }
-    .p-2 { padding: clamp(0.5rem, 2vw, 0.75rem); }
-    
+
+    .p-4 {
+      padding: clamp(1rem, 3vw, 1.5rem);
+    }
+
+    .p-3 {
+      padding: clamp(0.75rem, 2.5vw, 1rem);
+    }
+
+    .p-2 {
+      padding: clamp(0.5rem, 2vw, 0.75rem);
+    }
+
     /* Gap utilities for flexbox */
-    .gap-2 { gap: clamp(0.5rem, 2vw, 1rem); }
-    
+    .gap-2 {
+      gap: clamp(0.5rem, 2vw, 1rem);
+    }
+
     /* Improved rounded corners for different screens */
-    .rounded-2xl { border-radius: clamp(0.75rem, 3vw, 1rem); }
-    .rounded-xl { border-radius: clamp(0.625rem, 2.5vw, 0.75rem); }
-    .rounded-lg { border-radius: clamp(0.5rem, 2vw, 0.625rem); }
-    .rounded-md { border-radius: clamp(0.375rem, 1.5vw, 0.5rem); }
-    
+    .rounded-2xl {
+      border-radius: clamp(0.75rem, 3vw, 1rem);
+    }
+
+    .rounded-xl {
+      border-radius: clamp(0.625rem, 2.5vw, 0.75rem);
+    }
+
+    .rounded-lg {
+      border-radius: clamp(0.5rem, 2vw, 0.625rem);
+    }
+
+    .rounded-md {
+      border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
+    }
+
     /* Expense list items */
     #expenses-list .soft-card {
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
-    
+
     #expenses-list .soft-card:active {
       transform: scale(0.98);
       opacity: 0.9;
     }
-    
+
     /* Footer responsiveness */
     footer {
       font-size: clamp(0.75rem, 3vw, 0.875rem);
       margin-top: 2rem;
     }
-    
+
     /* Very small devices (phones under 320px) */
     @media (max-width: 320px) {
       main {
         padding: 0.75rem;
       }
-      
+
       .soft-card {
-        box-shadow: 4px 4px 8px rgba(0,0,0,0.6), -3px -3px 6px rgba(255,255,255,0.01);
+        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.01);
       }
     }
-    
+
     /* Large devices (tablets and above) */
     @media (min-width: 768px) {
       main {
         padding: 1.5rem;
       }
-      
+
       body {
         display: flex;
         align-items: center;
         justify-content: center;
       }
     }
-    
+
     /* Prevent horizontal scrolling */
     @media (max-width: 480px) {
       .flex.gap-2 {
         flex-wrap: wrap;
       }
-      
-      .flex.gap-2 > * {
+
+      .flex.gap-2>* {
         flex: 1 1 100%;
         margin-bottom: 0.5rem;
       }
     }
-    
+
     /* Landscape mode adjustments */
     @media (max-height: 500px) and (orientation: landscape) {
       main {
         padding: 0.5rem;
       }
-      
-      #auth, #dashboard {
+
+      #auth,
+      #dashboard {
         transform: scale(0.95);
         transform-origin: top center;
       }
     }
-    
+
     /* High DPI displays */
-    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    @media (-webkit-min-device-pixel-ratio: 2),
+    (min-resolution: 192dpi) {
       .soft-card {
         border-width: 0.5px;
       }
     }
-    
+
     /* Reduced motion for accessibility */
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -154,15 +197,16 @@
         animation-duration: 0.01ms !important;
       }
     }
-    
+
     /* Dark mode enhancements (already in dark mode) */
     @media (prefers-color-scheme: dark) {
       .soft-card {
-        background: rgba(255,255,255,0.03);
+        background: rgba(255, 255, 255, 0.03);
       }
     }
   </style>
 </head>
+
 <body class="bg-[#0b0f14] text-slate-200 min-h-screen antialiased">
   <!-- Rest of your HTML remains exactly the same -->
   <main class="max-w-md mx-auto p-4">
@@ -175,28 +219,29 @@
 
       <div id="login-card" class="soft-card p-4 rounded-2xl">
         <p class="text-sm text-slate-400 mb-3">Sign in to start splitting expenses with your roommate.</p>
-        <button id="google-signin" class="w-full py-3 rounded-xl glass border border-slate-700 text-sm font-medium">Sign in with Google</button>
+        <button id="google-signin" class="w-full py-3 rounded-xl glass border border-slate-700 text-sm font-medium">Sign
+          in with Google</button>
       </div>
 
       <div id="friend-card" class="hidden soft-card p-4 rounded-2xl">
-<p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
+        <p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
 
-<div class="mt-2 space-y-2">
-  <div class="flex gap-2">
-    <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" placeholder="friend@example.com" />
-    <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
-  </div>
+        <div class="mt-2 space-y-2">
+          <div class="flex gap-2">
+            <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm"
+              placeholder="friend@example.com" />
+            <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
+          </div>
 
-  <!-- Dropdown for previously added friends -->
-<select 
-  id="friend-history" 
-  class="w-full bg-[#0f131a] border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-600">
-  <option value="">Select from previous friends</option>
-</select>
+          <!-- Dropdown for previously added friends -->
+          <select id="friend-history"
+            class="w-full bg-[#0f131a] border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-600">
+            <option value="">Select from previous friends</option>
+          </select>
 
-</div>
+        </div>
 
-<p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
+        <p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
 
       </div>
     </section>
@@ -223,33 +268,51 @@
       <!-- Add expense form -->
       <div class="soft-card p-4 rounded-2xl">
         <div class="flex items-center gap-2 mb-3">
-          <input id="amount" type="number" placeholder="Amount (₹)" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" />
+          <input id="amount" type="number" placeholder="Amount (₹)"
+            class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" />
           <button id="add-expense" class="px-3 py-2 rounded-lg soft-card">Add</button>
         </div>
-        <input id="note" placeholder="Note (eg. Vegetables)" class="w-full bg-transparent border border-slate-700 rounded-lg p-2 text-sm mb-2" />
+        <input id="note" placeholder="Note (eg. Vegetables)"
+          class="w-full bg-transparent border border-slate-700 rounded-lg p-2 text-sm mb-2" />
         <div class="flex items-center gap-2 text-xs text-slate-400">
-          <label><input id="split-with" type="checkbox" checked class="mr-2"/> Split equally</label>
+          <label><input id="split-with" type="checkbox" checked class="mr-2" /> Split equally</label>
         </div>
       </div>
 
       <!-- Sorting & filters -->
-      <div class="flex gap-2">
-        <select id="sort" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm">
-          <option value="date-desc">Date (newest)</option>
-          <option value="date-asc">Date (oldest)</option>
-          <option value="amount-desc">Amount (high)</option>
-          <option value="amount-asc">Amount (low)</option>
-          <option value="unpaid-first">Unpaid first</option>
-        </select>
+      <div class="flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <h2 id="current-month-display" class="text-lg font-semibold text-slate-200"></h2>
+          <div class="relative">
+            <button id="calendar-btn" class="px-3 py-2 rounded-lg soft-card text-sm flex items-center gap-2">
+              <span>📅</span> Calendar
+            </button>
+            <!-- Month Selection Dropdown -->
+            <div id="month-dropdown"
+              class="hidden absolute right-0 top-full mt-2 w-48 bg-[#0f131a] border border-slate-700 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+              <!-- Options injected here -->
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <select id="sort" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm">
+            <option value="date-desc">Date (newest)</option>
+            <option value="date-asc">Date (oldest)</option>
+            <option value="amount-desc">Amount (high)</option>
+            <option value="amount-asc">Amount (low)</option>
+            <option value="unpaid-first">Unpaid first</option>
+          </select>
+        </div>
       </div>
-<button id="clear-all" class="px-3 py-2 rounded-lg soft-card text-sm mt-2">Clear All Expenses</button>
+      <button id="clear-all" class="px-3 py-2 rounded-lg soft-card text-sm mt-2">Clear All Expenses</button>
 
       <!-- Expenses list -->
       <div id="expenses-list" class="space-y-3"></div>
 
     </section>
 
-    <footer class="mt-6 text-xs text-slate-500 text-center">by <a href="https://www.linkedin.com/in/imransiddiqui786/">Md Imran Siddiqui</a>•</footer>
+    <footer class="mt-6 text-xs text-slate-500 text-center">by <a
+        href="https://www.linkedin.com/in/imransiddiqui786/">Md Imran Siddiqui</a>•</footer>
   </main>
 
   <script type="module">
@@ -259,16 +322,16 @@
     import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, query, where, orderBy, getDocs, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js'
 
     // TODO: replace with your firebase config
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
-  authDomain: "dhansplit.firebaseapp.com",
-  projectId: "dhansplit",
-  storageBucket: "dhansplit.firebasestorage.app",
-  messagingSenderId: "1042555508326",
-  appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
-  measurementId: "G-X8QMR709D2"
-};
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
+      authDomain: "dhansplit.firebaseapp.com",
+      projectId: "dhansplit",
+      storageBucket: "dhansplit.firebasestorage.app",
+      messagingSenderId: "1042555508326",
+      appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
+      measurementId: "G-X8QMR709D2"
+    };
 
     const app = initializeApp(firebaseConfig)
     const auth = getAuth(app)
@@ -295,144 +358,228 @@ const firebaseConfig = {
     const sortSelect = document.getElementById('sort')
     const friendHistorySelect = document.getElementById('friend-history')
 
+    // Calendar Refs
+    const calendarBtn = document.getElementById('calendar-btn')
+    const monthDropdown = document.getElementById('month-dropdown')
+    const currentMonthDisplay = document.getElementById('current-month-display')
+
     let currentUser = null
     let friendEmail = null
     let pairId = null
     let unsubscribeExpenses = null
 
+    // State for filtering
+    let allItems = []
+    let selectedDate = new Date() // Defaults to current month
+
     // helpers
-    function makePairId(a,b){
-      if(!a||!b) return null
-      const aL=a.toLowerCase().trim(), bL=b.toLowerCase().trim()
-      return [aL,bL].sort().join('_')
+    function makePairId(a, b) {
+      if (!a || !b) return null
+      const aL = a.toLowerCase().trim(), bL = b.toLowerCase().trim()
+      return [aL, bL].sort().join('_')
     }
 
     // Auth flows
-    googleBtn.addEventListener('click', async ()=>{
-      try{
+    googleBtn.addEventListener('click', async () => {
+      try {
         await signInWithPopup(auth, provider)
-      }catch(e){ console.error(e); alert('Sign in failed') }
+      } catch (e) { console.error(e); alert('Sign in failed') }
     })
 
-    signOutBtn.addEventListener('click', ()=> signOut(auth))
+    signOutBtn.addEventListener('click', () => signOut(auth))
 
-onAuthStateChanged(auth, async user => {
-  currentUser = user
-  if(user){
-    loginCard.classList.add('hidden')
-    signOutBtn.classList.remove('hidden')
-    friendCard.classList.remove('hidden')
-    dashboard.classList.remove('hidden')
+    onAuthStateChanged(auth, async user => {
+      currentUser = user
+      if (user) {
+        loginCard.classList.add('hidden')
+        signOutBtn.classList.remove('hidden')
+        friendCard.classList.remove('hidden')
+        dashboard.classList.remove('hidden')
 
-    // **load from localStorage first**
-    const savedEmail = localStorage.getItem('friendEmail')
-    if(savedEmail){
-      friendEmail = savedEmail
-      friendEmailInput.value = friendEmail
-      friendSaved.classList.remove('hidden')
-      setupExpenseListener()
-      populateFriendHistory()
-    } else {
-      // fallback: load from Firestore
-      try{
-        const read = await fetchUserDoc(user.uid)
-        if(read && read.friendEmail){
-          friendEmail = read.friendEmail
+        // **load from localStorage first**
+        const savedEmail = localStorage.getItem('friendEmail')
+        if (savedEmail) {
+          friendEmail = savedEmail
           friendEmailInput.value = friendEmail
           friendSaved.classList.remove('hidden')
           setupExpenseListener()
+          populateFriendHistory()
+        } else {
+          // fallback: load from Firestore
+          try {
+            const read = await fetchUserDoc(user.uid)
+            if (read && read.friendEmail) {
+              friendEmail = read.friendEmail
+              friendEmailInput.value = friendEmail
+              friendSaved.classList.remove('hidden')
+              setupExpenseListener()
+            }
+          } catch (e) { console.log('no user doc yet') }
         }
-      }catch(e){console.log('no user doc yet')}
-    }
 
-  } else {
-    loginCard.classList.remove('hidden')
-    signOutBtn.classList.add('hidden')
-    friendCard.classList.add('hidden')
-    dashboard.classList.add('hidden')
-    if(unsubscribeExpenses) unsubscribeExpenses()
-  }
-})
+        updateMonthDisplay()
 
-    async function fetchUserDoc(uid){
-      const d = doc(db,'users',uid)
-      try{
+      } else {
+        loginCard.classList.remove('hidden')
+        signOutBtn.classList.add('hidden')
+        friendCard.classList.add('hidden')
+        dashboard.classList.add('hidden')
+        if (unsubscribeExpenses) unsubscribeExpenses()
+      }
+    })
+
+    async function fetchUserDoc(uid) {
+      const d = doc(db, 'users', uid)
+      try {
         // get via getDocs isn't ideal but easier in this single file example
-        const snap = await getDocs(query(collection(db,'users'), where('uid','==',uid)))
-        if(!snap.empty){
+        const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', uid)))
+        if (!snap.empty) {
           const docdata = snap.docs[0].data()
           return docdata
         }
-      }catch(e){console.error(e)}
+      } catch (e) { console.error(e) }
       return null
     }
 
-saveFriendBtn.addEventListener('click', async ()=> {
-  const val = friendEmailInput.value.trim().toLowerCase()
-  if(!val || !currentUser){ alert('Enter valid email'); return }
+    saveFriendBtn.addEventListener('click', async () => {
+      const val = friendEmailInput.value.trim().toLowerCase()
+      if (!val || !currentUser) { alert('Enter valid email'); return }
 
-  friendEmail = val
-  pairId = makePairId(currentUser.email, friendEmail)
+      friendEmail = val
+      pairId = makePairId(currentUser.email, friendEmail)
 
-  // save to Firestore
-  await setDoc(doc(db, 'users', currentUser.uid), {
-    uid: currentUser.uid,
-    email: currentUser.email,
-    friendEmail,
-    pairId,
-    updatedAt: serverTimestamp()
-  })
+      // save to Firestore
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        friendEmail,
+        pairId,
+        updatedAt: serverTimestamp()
+      })
 
-  // 🧠 Save to localStorage (multiple)
-  let existingFriends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
-  if (!existingFriends.includes(friendEmail)) {
-    existingFriends.push(friendEmail)
-    localStorage.setItem('friendEmails', JSON.stringify(existingFriends))
-  }
+      // 🧠 Save to localStorage (multiple)
+      let existingFriends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
+      if (!existingFriends.includes(friendEmail)) {
+        existingFriends.push(friendEmail)
+        localStorage.setItem('friendEmails', JSON.stringify(existingFriends))
+      }
 
-  // Also save current friend for auto-load next time
-  localStorage.setItem('friendEmail', friendEmail)
+      // Also save current friend for auto-load next time
+      localStorage.setItem('friendEmail', friendEmail)
 
-  friendSaved.classList.remove('hidden')
-  populateFriendHistory()
-  setupExpenseListener()
-})
+      friendSaved.classList.remove('hidden')
+      populateFriendHistory()
+      setupExpenseListener()
+    })
 
 
-const clearAllBtn = document.getElementById('clear-all')
+    const clearAllBtn = document.getElementById('clear-all')
 
-clearAllBtn.addEventListener('click', async () => {
-  if(!currentUser || !friendEmail) return
-  if(!confirm('Are you sure you want to delete ALL expenses for this friend?')) return
+    clearAllBtn.addEventListener('click', async () => {
+      if (!currentUser || !friendEmail) return
+      if (!confirm('Are you sure you want to delete ALL expenses for this friend?')) return
 
-  // fetch all expenses for this pair
-  const q = query(collection(db, 'expenses'), where('pairId','==',pairId))
-  const snap = await getDocs(q)
-  const batchDeletes = snap.docs.map(docSnap => deleteDoc(doc(db,'expenses',docSnap.id)))
-  await Promise.all(batchDeletes)
-})
+      // fetch all expenses for this pair
+      const q = query(collection(db, 'expenses'), where('pairId', '==', pairId))
+      const snap = await getDocs(q)
+      const batchDeletes = snap.docs.map(docSnap => deleteDoc(doc(db, 'expenses', docSnap.id)))
+      await Promise.all(batchDeletes)
+    })
 
 
     // listener for expenses for this pair
-    async function setupExpenseListener(){
-      if(!currentUser || !friendEmail) return
+    async function setupExpenseListener() {
+      if (!currentUser || !friendEmail) return
       pairId = makePairId(currentUser.email, friendEmail)
       // unsubscribe previous
-      if(unsubscribeExpenses) unsubscribeExpenses()
-      const expensesQ = query(collection(db,'expenses'), where('pairId','==',pairId), orderBy('createdAt','desc'))
-      unsubscribeExpenses = onSnapshot(expensesQ, snap=>{
-        const items = []
-        snap.forEach(doc=> items.push({ id: doc.id, ...doc.data() }))
-        renderExpenses(items)
+      if (unsubscribeExpenses) unsubscribeExpenses()
+      const expensesQ = query(collection(db, 'expenses'), where('pairId', '==', pairId), orderBy('createdAt', 'desc'))
+      unsubscribeExpenses = onSnapshot(expensesQ, snap => {
+        allItems = []
+        snap.forEach(doc => allItems.push({ id: doc.id, ...doc.data() }))
+        applyFilters() // Filter and render
+        generateMonthList() // Update calendar options
       })
     }
 
+    // Filter Logic
+    function applyFilters() {
+      const filtered = allItems.filter(item => {
+        if (!item.createdAt) return false; // Skip if no date
+        const date = item.createdAt.toDate();
+        return date.getMonth() === selectedDate.getMonth() &&
+          date.getFullYear() === selectedDate.getFullYear();
+      });
+      renderExpenses(filtered);
+    }
+
+    function updateMonthDisplay() {
+      const monthName = selectedDate.toLocaleString('default', { month: 'long' });
+      const year = selectedDate.getFullYear();
+      currentMonthDisplay.textContent = `${monthName} ${year}`;
+    }
+
+    // Calendar / Month List Logic
+    function generateMonthList() {
+      const months = new Set();
+      // Always include current month
+      const now = new Date();
+      months.add(`${now.getFullYear()}-${now.getMonth()}`);
+
+      allItems.forEach(item => {
+        if (item.createdAt) {
+          const d = item.createdAt.toDate();
+          months.add(`${d.getFullYear()}-${d.getMonth()}`);
+        }
+      });
+
+      // Sort months descending
+      const sortedMonths = Array.from(months).sort((a, b) => {
+        const [yA, mA] = a.split('-').map(Number);
+        const [yB, mB] = b.split('-').map(Number);
+        return (yB - yA) || (mB - mA);
+      });
+
+      monthDropdown.innerHTML = '';
+      sortedMonths.forEach(key => {
+        const [year, monthIdx] = key.split('-').map(Number);
+        const date = new Date(year, monthIdx);
+        const label = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left px-4 py-2 hover:bg-slate-800 text-sm text-slate-300';
+        btn.textContent = label;
+        if (monthIdx === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
+          btn.classList.add('bg-slate-800', 'text-white', 'font-semibold');
+        }
+        btn.addEventListener('click', () => {
+          selectedDate = new Date(year, monthIdx);
+          updateMonthDisplay();
+          applyFilters();
+          monthDropdown.classList.add('hidden');
+        });
+        monthDropdown.appendChild(btn);
+      });
+    }
+
+    calendarBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      monthDropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!calendarBtn.contains(e.target) && !monthDropdown.contains(e.target)) {
+        monthDropdown.classList.add('hidden');
+      }
+    });
+
     // add expense
-    addBtn.addEventListener('click', async ()=>{
+    addBtn.addEventListener('click', async () => {
       const amount = parseFloat(amountInput.value)
       const note = noteInput.value || ''
-      if(!amount || !currentUser || !friendEmail){ alert('fill amount and friend email'); return }
-      const docRef = await addDoc(collection(db,'expenses'), {
+      if (!amount || !currentUser || !friendEmail) { alert('fill amount and friend email'); return }
+      const docRef = await addDoc(collection(db, 'expenses'), {
         amount, note, ownerUid: currentUser.uid, ownerEmail: currentUser.email, pairId, paid: false, createdAt: serverTimestamp()
       })
       amountInput.value = ''
@@ -440,41 +587,43 @@ clearAllBtn.addEventListener('click', async () => {
     })
 
     // render and calculations
-    function renderExpenses(items){
+    function renderExpenses(items) {
       const sort = sortSelect.value;
-  items = items.slice();
-  if (sort === 'date-asc') items.reverse();
-  if (sort === 'amount-desc') items.sort((a, b) => b.amount - a.amount);
-  if (sort === 'amount-asc') items.sort((a, b) => a.amount - b.amount);
-  if (sort === 'unpaid-first') items.sort((a, b) => (a.paid === b.paid) ? 0 : (a.paid ? 1 : -1));
+      // We clone items to avoid mutating the filtered list directly if we were to re-use it
+      let displayItems = [...items];
 
-  const roommate_owes = document.getElementById('roommate-owes');
-  expensesList.innerHTML = '';
-  let total = 0, you = 0, owes = 0;
+      if (sort === 'date-asc') displayItems.reverse();
+      if (sort === 'amount-desc') displayItems.sort((a, b) => b.amount - a.amount);
+      if (sort === 'amount-asc') displayItems.sort((a, b) => a.amount - b.amount);
+      if (sort === 'unpaid-first') displayItems.sort((a, b) => (a.paid === b.paid) ? 0 : (a.paid ? 1 : -1));
 
-  items.forEach(it => {
-    owes += it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount / 2 : -it.amount / 2;
-    roommate_owes.textContent = `₹${owes.toFixed(2)}`;
+      const roommate_owes = document.getElementById('roommate-owes');
+      expensesList.innerHTML = '';
+      let total = 0, you = 0, owes = 0;
 
-    // 🌈 Dynamic color update
-    if (owes < 0) {
-      roommate_owes.style.color = 'red';   // You owe less → good → green
-    } else if (owes > 0) {
-      roommate_owes.style.color = 'green';     // You owe more → bad → red
-    } else {
-      roommate_owes.style.color = 'gray';    // Neutral
-    }
+      displayItems.forEach(it => {
+        owes += it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount / 2 : -it.amount / 2;
+        roommate_owes.textContent = `₹${owes.toFixed(2)}`;
 
-    total += it.amount;
-    if (it.ownerEmail === currentUser.email) you += it.amount;
-    const ts = it.createdAt?.toDate ? it.createdAt.toDate() : null;
-const formatted = ts
-  ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
-  : "—";
-  const card = document.createElement('div');
-  card.className = 'soft-card p-3 rounded-xl';
+        // 🌈 Dynamic color update
+        if (owes < 0) {
+          roommate_owes.style.color = 'red';   // You owe less → good → green
+        } else if (owes > 0) {
+          roommate_owes.style.color = 'green';     // You owe more → bad → red
+        } else {
+          roommate_owes.style.color = 'gray';    // Neutral
+        }
 
-card.innerHTML = `
+        total += it.amount;
+        if (it.ownerEmail === currentUser.email) you += it.amount;
+        const ts = it.createdAt?.toDate ? it.createdAt.toDate() : null;
+        const formatted = ts
+          ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+          : "—";
+        const card = document.createElement('div');
+        card.className = 'soft-card p-3 rounded-xl';
+
+        card.innerHTML = `
   <div class="flex justify-between items-start"> 
     <div>
       <div class="text-sm font-semibold">₹${it.amount.toFixed(2)}</div>
@@ -487,86 +636,86 @@ card.innerHTML = `
       <div class="mb-2 ${it.paid ? 'text-green-300' : 'text-amber-300'}">${it.paid ? 'Paid' : 'Unpaid'}</div>
       <div class="flex gap-2">
         ${it.ownerUid === currentUser.uid
-          ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
+            ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
              <button data-delete=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Delete</button>
              <button data-paid=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>`
-          : ''
-        }
+            : ''
+          }
       </div>
     </div>
   </div>
 `;
-    expensesList.appendChild(card);
-  });
+        expensesList.appendChild(card);
+      });
 
       const friend = total - you
-      const split = total/2
-      const roommateOwes = Math.round((you - split)*100)/100
+      const split = total / 2
+      const roommateOwes = Math.round((you - split) * 100) / 100
 
       totalSpentEl.textContent = `₹${total.toFixed(2)}`
       yourSpentEl.textContent = `₹${you.toFixed(2)}`
       friendSpentEl.textContent = `₹${friend.toFixed(2)}`
 
       // attach event handlers for actions
-      document.querySelectorAll('[data-delete]').forEach(btn=> btn.addEventListener('click', async (e)=>{
+      document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', async (e) => {
         const id = btn.getAttribute('data-delete')
-        if(confirm('Delete this expense?')){
-          await deleteDoc(doc(db,'expenses',id))
+        if (confirm('Delete this expense?')) {
+          await deleteDoc(doc(db, 'expenses', id))
         }
       }))
 
-      document.querySelectorAll('[data-paid]').forEach(btn=> btn.addEventListener('click', async ()=>{
+      document.querySelectorAll('[data-paid]').forEach(btn => btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-paid')
-        const ref = doc(db,'expenses',id)
+        const ref = doc(db, 'expenses', id)
         // toggle paid state (simple read->update flow)
         // (in real app use transaction)
-        const snap = await getDocs(query(collection(db,'expenses'), where('__name__','==',id)))
-        if(!snap.empty){
+        const snap = await getDocs(query(collection(db, 'expenses'), where('__name__', '==', id)))
+        if (!snap.empty) {
           const data = snap.docs[0].data()
           await updateDoc(ref, { paid: !data.paid, updatedAt: serverTimestamp() })
         }
       }))
 
-      document.querySelectorAll('[data-edit]').forEach(btn=> btn.addEventListener('click', async ()=>{
+      document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-edit')
         const newNote = prompt('Edit note')
         const newAmount = prompt('Edit amount')
-        if(newNote !== null && newAmount !== null){
-          const ref = doc(db,'expenses',id)
+        if (newNote !== null && newAmount !== null) {
+          const ref = doc(db, 'expenses', id)
           await updateDoc(ref, { note: newNote, amount: parseFloat(newAmount), updatedAt: serverTimestamp() })
         }
       }))
     }
-function populateFriendHistory(){
-  friendHistorySelect.innerHTML = '<option value="">Select from previous friends</option>'
-  const friends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
-  friends.forEach(email=>{
-    const opt = document.createElement('option')
-    opt.value = email
-    opt.textContent = email
-    friendHistorySelect.appendChild(opt)
-  })
-}
-friendHistorySelect.addEventListener('change', ()=>{
-  const val = friendHistorySelect.value
-  if(val){
-    friendEmail = val
-    friendEmailInput.value = val
-    localStorage.setItem('friendEmail', val)
-    friendSaved.classList.remove('hidden')
-    setupExpenseListener()
-  }
-})
+    function populateFriendHistory() {
+      friendHistorySelect.innerHTML = '<option value="">Select from previous friends</option>'
+      const friends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
+      friends.forEach(email => {
+        const opt = document.createElement('option')
+        opt.value = email
+        opt.textContent = email
+        friendHistorySelect.appendChild(opt)
+      })
+    }
+    friendHistorySelect.addEventListener('change', () => {
+      const val = friendHistorySelect.value
+      if (val) {
+        friendEmail = val
+        friendEmailInput.value = val
+        localStorage.setItem('friendEmail', val)
+        friendSaved.classList.remove('hidden')
+        setupExpenseListener()
+      }
+    })
 
     // local change of sort
-    sortSelect.addEventListener('change', ()=>{ if(unsubscribeExpenses) setupExpenseListener() })
+    sortSelect.addEventListener('change', () => { applyFilters() })
 
   </script>
-  
-<!-- 🚨 Fallback for Older Browsers (no modules support) -->
-<script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<!-- <script nomodule>
+
+  <!-- 🚨 Fallback for Older Browsers (no modules support) -->
+  <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- <script nomodule>
   // Firebase config
   var firebaseConfig = {
   apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
@@ -585,5 +734,5 @@ friendHistorySelect.addEventListener('change', ()=>{
   console.log("Loaded with nomodule fallback 🚀");
 </script> -->
 </body>
-</html>
 
+</html>
