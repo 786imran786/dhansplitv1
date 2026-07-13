@@ -320,30 +320,53 @@
 
       <!-- Balance Summary Card -->
       <div class="soft-card p-4 rounded-2xl">
-        <div class="flex justify-between items-start mb-3">
+        <div class="grid grid-cols-2 gap-4 pb-3 border-b border-slate-800/70">
           <div>
-            <div class="text-xs text-slate-500">Total Spent</div>
-            <div id="group-total-spent" class="text-2xl font-extrabold mt-0.5">₹0</div>
+            <div class="text-xs text-slate-500">Group Total Spent</div>
+            <div id="group-total-spent" class="text-base font-bold text-slate-200 mt-0.5">₹0</div>
           </div>
           <div class="text-right">
-            <div class="text-xs text-slate-500">You paid</div>
-            <div id="group-you-paid" class="font-semibold text-sm">₹0</div>
-            <div class="text-xs text-slate-500 mt-1">Your balance</div>
-            <div id="group-your-balance" class="font-semibold text-sm bal-zero">₹0</div>
+            <div class="text-xs text-slate-500">Your Share</div>
+            <div id="group-your-share" class="text-base font-bold text-slate-200 mt-0.5">₹0</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 py-3">
+          <div>
+            <div class="text-xs text-slate-500">Your Paid</div>
+            <div id="group-you-paid" class="text-base font-bold text-slate-200 mt-0.5">₹0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">Net Balance</div>
+            <div id="group-your-balance" class="text-base font-bold bal-zero mt-0.5">₹0</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 pt-3 border-t border-slate-800/70">
+          <div>
+            <div class="text-xs text-slate-500">You Owe</div>
+            <div id="group-you-owe-total" class="text-sm font-semibold bal-neg mt-0.5">₹0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">You Are Owed</div>
+            <div id="group-you-are-owed-total" class="text-sm font-semibold bal-pos mt-0.5">₹0</div>
           </div>
         </div>
 
         <!-- Settlements -->
-        <div class="border-t border-slate-800/70 pt-3 mt-1">
-          <div class="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Settlements</div>
+        <div class="border-t border-slate-800/70 pt-3 mt-3">
+          <div class="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Simplified Debts</div>
           <div id="group-settlements" class="space-y-1.5"></div>
         </div>
       </div>
 
-      <!-- Add Expense Button -->
-      <button id="add-expense-btn" class="btn-green flex items-center justify-center gap-2">
-        <span class="text-lg leading-none">+</span> Add Expense
-      </button>
+      <!-- Action Buttons -->
+      <div class="flex gap-2">
+        <button id="add-expense-btn" class="btn-green flex-1 flex items-center justify-center gap-2">
+          <span class="text-lg leading-none">+</span> Add Expense
+        </button>
+        <button id="settle-up-btn" class="btn-primary flex-1 flex items-center justify-center gap-2">
+          <span class="text-lg leading-none">🤝</span> Settle Up
+        </button>
+      </div>
 
       <!-- Sort & Calendar row -->
       <div class="flex flex-col gap-2">
@@ -485,6 +508,61 @@
       </div>
 
       <button id="exp-submit" class="btn-primary">Save Expense</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MODAL  ·  SETTLE UP
+  ══════════════════════════════════════════ -->
+  <div id="modal-settle" class="hidden fixed inset-0 z-50 flex items-end justify-center">
+    <div id="modal-settle-backdrop" class="modal-overlay absolute inset-0"></div>
+    <div class="bottom-sheet relative w-full max-w-md p-5 pb-8 space-y-4">
+
+      <!-- Modal header -->
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold">🤝 Settle Up</h3>
+        <button id="modal-settle-close"
+          class="w-8 h-8 rounded-lg soft-card flex items-center justify-center text-slate-400 hover:text-white transition-colors text-xl leading-none">
+          ×
+        </button>
+      </div>
+
+      <!-- Quick settle suggestions -->
+      <div>
+        <label class="text-xs text-slate-500 mb-2 block font-medium">Quick Settle Suggestion(s)</label>
+        <div id="settle-suggestions" class="space-y-2"></div>
+      </div>
+
+      <!-- Divider -->
+      <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-slate-800"></div>
+        <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">Or custom payment</span>
+        <div class="flex-grow border-t border-slate-800"></div>
+      </div>
+
+      <!-- Payer -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Who paid (sent money)</label>
+        <select id="settle-payer" class="field text-sm text-slate-300"></select>
+      </div>
+
+      <!-- Receiver -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Who received (got money)</label>
+        <select id="settle-receiver" class="field text-sm text-slate-300"></select>
+      </div>
+
+      <!-- Amount -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Amount *</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+          <input id="settle-amount" type="number" placeholder="0.00" min="0" step="0.01"
+            class="field pl-8" />
+        </div>
+      </div>
+
+      <button id="settle-submit" class="btn-primary">Record Payment</button>
     </div>
   </div>
 
@@ -804,6 +882,13 @@
     document.getElementById('modal-close').addEventListener('click', closeExpenseModal)
     document.getElementById('modal-backdrop').addEventListener('click', closeExpenseModal)
 
+    /* ─────────────────────────────────────────────────────────────
+       SETTLE UP MODAL
+    ───────────────────────────────────────────────────────────── */
+    document.getElementById('settle-up-btn').addEventListener('click', () => openSettleModal())
+    document.getElementById('modal-settle-close').addEventListener('click', closeSettleModal)
+    document.getElementById('modal-settle-backdrop').addEventListener('click', closeSettleModal)
+
     function openExpenseModal(expense) {
       editingExpenseId = expense?.id || null
       document.getElementById('modal-title').textContent = editingExpenseId ? 'Edit Expense' : 'Add Expense'
@@ -977,6 +1062,164 @@
       }
     })
 
+    /* ── Settle Up Functions & Handlers ── */
+    function openSettleModal() {
+      if (!activeGroup) return
+      
+      const members = (activeGroup.members || []).filter(m => !m.pending)
+
+      // Calculate the simplified debts currently outstanding
+      // To get current outstanding debts, we run calculations on active expenses/settlements
+      const unsettled = groupExpenses.filter(e => !e.paid || e.isSettlement)
+      const balances = calculateGroupBalances(members, unsettled)
+      const settlements = getSettlements(balances, members)
+
+      // 1. Render suggestions list
+      const sugDiv = document.getElementById('settle-suggestions')
+      sugDiv.innerHTML = ''
+
+      // Filter settlements involving You (currentUser)
+      const mySettlements = settlements.filter(s => s.from === currentUser.uid || s.to === currentUser.uid)
+
+      if (mySettlements.length === 0) {
+        sugDiv.innerHTML = '<div class="text-xs text-slate-500 italic p-2">No outstanding debts to settle quickly.</div>'
+      } else {
+        mySettlements.forEach(s => {
+          const div = document.createElement('div')
+          div.className = 'flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-sm'
+          const label = s.from === currentUser.uid 
+            ? `You owe ${s.toName} ₹${s.amount.toFixed(2)}`
+            : `${s.fromName} owes you ₹${s.amount.toFixed(2)}`
+          
+          div.innerHTML = `
+            <span class="font-medium ${s.from === currentUser.uid ? 'bal-neg' : 'bal-pos'}">${escHtml(label)}</span>
+            <button class="quick-settle-btn px-3 py-1.5 rounded-lg soft-card text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                    data-from="${s.from}" data-to="${s.to}" data-amount="${s.amount}">
+              Settle
+            </button>
+          `
+          sugDiv.appendChild(div)
+        })
+
+        // Attach click handlers to Quick Settle buttons
+        sugDiv.querySelectorAll('.quick-settle-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const from = btn.getAttribute('data-from')
+            const to = btn.getAttribute('data-to')
+            const amount = parseFloat(btn.getAttribute('data-amount'))
+            
+            if (confirm(`Record a payment of ₹${amount.toFixed(2)} to settle up?`)) {
+              await recordSettlementTransaction(from, to, amount)
+              closeSettleModal()
+            }
+          })
+        })
+      }
+
+      // 2. Populate Custom Settlement dropdowns
+      const payerSelect = document.getElementById('settle-payer')
+      const receiverSelect = document.getElementById('settle-receiver')
+      payerSelect.innerHTML = ''
+      receiverSelect.innerHTML = ''
+
+      members.forEach(m => {
+        const optPayer = document.createElement('option')
+        optPayer.value = m.uid
+        optPayer.textContent = m.uid === currentUser.uid ? `You (${m.displayName})` : m.displayName
+        payerSelect.appendChild(optPayer)
+
+        const optRec = document.createElement('option')
+        optRec.value = m.uid
+        optRec.textContent = m.uid === currentUser.uid ? `You (${m.displayName})` : m.displayName
+        receiverSelect.appendChild(optRec)
+      })
+
+      // Default selections:
+      // If you owe someone, make You the payer and them the receiver.
+      // If someone owes you, make them the payer and You the receiver.
+      if (mySettlements.length > 0) {
+        const first = mySettlements[0]
+        payerSelect.value = first.from
+        receiverSelect.value = first.to
+        document.getElementById('settle-amount').value = first.amount.toFixed(2)
+      } else {
+        payerSelect.value = currentUser.uid
+        // Default receiver to the first other member
+        const other = members.find(m => m.uid !== currentUser.uid)
+        if (other) receiverSelect.value = other.uid
+        document.getElementById('settle-amount').value = ''
+      }
+
+      document.getElementById('modal-settle').classList.remove('hidden')
+    }
+
+    function closeSettleModal() {
+      document.getElementById('modal-settle').classList.add('hidden')
+    }
+
+    async function recordSettlementTransaction(payerUid, receiverUid, amount) {
+      if (payerUid === receiverUid) {
+        alert('Payer and Receiver cannot be the same person.');
+        return;
+      }
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid positive amount.');
+        return;
+      }
+
+      const payerMember = (activeGroup.members || []).find(m => m.uid === payerUid)
+
+      const settlementData = {
+        amount,
+        note: "Settlement",
+        paidBy: payerUid,
+        paidByEmail: payerMember?.email || '',
+        paidByName: payerMember?.displayName || '',
+        splitAmong: [receiverUid], // receiver stored in splitAmong[0]
+        splits: {},
+        isSettlement: true,
+        paid: false, // Settlements are always considered active/valid
+        ownerUid: currentUser.uid,
+        ownerEmail: currentUser.email,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+
+      try {
+        await addDoc(collection(db, 'groups', activeGroup.id, 'expenses'), settlementData)
+      } catch (e) {
+        console.error(e)
+        alert('Failed to record settlement: ' + e.message)
+      }
+    }
+
+    document.getElementById('settle-submit').addEventListener('click', async () => {
+      const payer = document.getElementById('settle-payer').value
+      const receiver = document.getElementById('settle-receiver').value
+      const amount = parseFloat(document.getElementById('settle-amount').value)
+
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      if (payer === receiver) {
+        alert('Payer and recipient cannot be the same person');
+        return;
+      }
+
+      const btn = document.getElementById('settle-submit')
+      btn.disabled = true
+      btn.textContent = 'Saving…'
+
+      try {
+        await recordSettlementTransaction(payer, receiver, amount)
+        closeSettleModal()
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Record Payment'
+      }
+    })
+
     /* ─────────────────────────────────────────────────────────────
        BALANCE CALCULATIONS
     ───────────────────────────────────────────────────────────── */
@@ -987,9 +1230,18 @@
       members.filter(m => !m.pending).forEach(m => { balances[m.uid] = 0 })
 
       expenses.forEach(exp => {
-        if (exp.paid) return
+        if (exp.paid && !exp.isSettlement) return
         const payer = exp.paidBy
         if (!(payer in balances)) return
+
+        if (exp.isSettlement) {
+          const receiver = exp.splitAmong?.[0]
+          if (receiver && (receiver in balances)) {
+            balances[payer]    += exp.amount
+            balances[receiver] -= exp.amount
+          }
+          return
+        }
 
         if (!exp.splitType || exp.splitType === 'equal') {
           const among = (exp.splitAmong || []).filter(uid => uid in balances)
@@ -1065,33 +1317,80 @@
     function renderGroupSummary(expenses) {
       if (!activeGroup) return
       const members   = (activeGroup.members || []).filter(m => !m.pending)
-      const unsettled = expenses.filter(e => !e.paid)
-      const balances  = calculateGroupBalances(members, unsettled)
+      
+      // Calculate balances based on active expenses and settlements.
+      // An expense is active if it's not individually toggled/settled (paid: true).
+      // A settlement is always active.
+      const activeExpenses = expenses.filter(e => !e.paid || e.isSettlement)
+      const balances  = calculateGroupBalances(members, activeExpenses)
 
-      // Totals
-      const total   = unsettled.reduce((s, e) => s + e.amount, 0)
-      const youPaid = unsettled.filter(e => e.paidBy === currentUser.uid).reduce((s, e) => s + e.amount, 0)
-      const myBal   = balances[currentUser.uid] || 0
+      // 1. Group Total Spent (actual expenses only, excluding settlements)
+      const totalSpent = expenses
+        .filter(e => !e.isSettlement)
+        .reduce((sum, e) => sum + e.amount, 0)
 
-      document.getElementById('group-total-spent').textContent = `₹${total.toFixed(2)}`
-      document.getElementById('group-you-paid').textContent    = `₹${youPaid.toFixed(2)}`
+      // 2. My Total Paid (logged-in user payments: actual expenses + settlements paid by me)
+      const myTotalPaid = expenses
+        .filter(e => e.paidBy === currentUser.uid)
+        .reduce((sum, e) => sum + e.amount, 0)
+
+      // 3. My Total Share (logged-in user share: actual shares + settlements received by me)
+      let myTotalShare = 0
+      expenses.forEach(e => {
+        if (e.isSettlement) {
+          if (e.splitAmong?.[0] === currentUser.uid) {
+            myTotalShare += e.amount
+          }
+        } else {
+          if (e.splitAmong?.includes(currentUser.uid)) {
+            if (e.splitType === 'custom') {
+              myTotalShare += e.splits?.[currentUser.uid] || 0
+            } else {
+              myTotalShare += e.amount / e.splitAmong.length
+            }
+          }
+        }
+      })
+
+      // 4. Net Balance
+      const myBal = myTotalPaid - myTotalShare
+
+      // Simplified Debts Match
+      const settlements = getSettlements(balances, members)
+      
+      // Calculate total You Owe and You Are Owed from simplified debts
+      let totalYouOwe = 0
+      let totalYouAreOwed = 0
+      settlements.forEach(s => {
+        if (s.from === currentUser.uid) {
+          totalYouOwe += s.amount
+        }
+        if (s.to === currentUser.uid) {
+          totalYouAreOwed += s.amount
+        }
+      })
+
+      // Update UI elements
+      document.getElementById('group-total-spent').textContent = `₹${totalSpent.toFixed(2)}`
+      document.getElementById('group-your-share').textContent  = `₹${myTotalShare.toFixed(2)}`
+      document.getElementById('group-you-paid').textContent    = `₹${myTotalPaid.toFixed(2)}`
+      document.getElementById('group-you-owe-total').textContent = `₹${totalYouOwe.toFixed(2)}`
+      document.getElementById('group-you-are-owed-total').textContent = `₹${totalYouAreOwed.toFixed(2)}`
 
       const balEl = document.getElementById('group-your-balance')
       if (myBal > 0.01) {
         balEl.textContent = `+₹${myBal.toFixed(2)}`
-        balEl.className   = 'font-semibold text-sm bal-pos'
+        balEl.className   = 'text-base font-bold bal-pos mt-0.5'
       } else if (myBal < -0.01) {
         balEl.textContent = `-₹${Math.abs(myBal).toFixed(2)}`
-        balEl.className   = 'font-semibold text-sm bal-neg'
+        balEl.className   = 'text-base font-bold bal-neg mt-0.5'
       } else {
-        balEl.textContent = '₹0 ✓'
-        balEl.className   = 'font-semibold text-sm bal-zero'
+        balEl.textContent = '₹0.00'
+        balEl.className   = 'text-base font-bold bal-zero mt-0.5'
       }
 
-      // Settlements
-      const sDiv       = document.getElementById('group-settlements')
-      const settlements = getSettlements(balances, members)
-
+      // Display Settlements list (Simplified Debts)
+      const sDiv = document.getElementById('group-settlements')
       if (settlements.length === 0) {
         sDiv.innerHTML = '<div class="text-xs bal-pos">✓ All settled up!</div>'
       } else {
@@ -1132,6 +1431,48 @@
       list.forEach(exp => {
         const ts        = exp.createdAt?.toDate?.() || null
         const formatted = ts ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+
+        if (exp.isSettlement) {
+          const receiverUid = exp.splitAmong?.[0]
+          const receiverMember = (activeGroup.members || []).find(m => m.uid === receiverUid)
+          const receiverName = receiverUid === currentUser.uid 
+            ? 'You' 
+            : (receiverMember?.displayName || receiverMember?.email || 'Someone')
+          
+          const payerName = exp.paidBy === currentUser.uid 
+            ? 'You' 
+            : (exp.paidByName || exp.paidByEmail || 'Someone')
+
+          const isOwner   = exp.ownerUid === currentUser.uid
+          const isAdmin   = activeGroup?.createdBy === currentUser.uid
+          const canDelete = isOwner || isAdmin
+
+          const card = document.createElement('div')
+          card.className = 'expense-card soft-card p-3 rounded-xl border border-indigo-950/40 bg-indigo-950/5'
+          card.innerHTML = `
+            <div class="flex justify-between items-start gap-2">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-9 h-9 rounded-full bg-indigo-950/60 border border-indigo-500/20 flex items-center justify-center text-lg flex-shrink-0">🤝</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-indigo-300">
+                    ${escHtml(payerName)} paid ${escHtml(receiverName)}
+                  </div>
+                  <div class="text-xs text-slate-400 font-medium mt-0.5">₹${Number(exp.amount).toFixed(2)}</div>
+                  <div class="text-xxs text-slate-500 mt-1">${formatted}</div>
+                </div>
+              </div>
+              ${canDelete ? `
+              <div class="flex flex-col gap-1 flex-shrink-0">
+                <button data-delete="${exp.id}"
+                  class="px-2.5 py-1 rounded-lg soft-card text-xs text-slate-300 hover:text-red-400 transition-colors">
+                  Delete
+                </button>
+              </div>` : ''}
+            </div>`
+          el.appendChild(card)
+          return
+        }
+
         const paidByName = exp.paidBy === currentUser.uid
           ? 'You'
           : (exp.paidByName || exp.paidByEmail || 'Someone')
