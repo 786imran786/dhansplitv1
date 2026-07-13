@@ -342,18 +342,18 @@
         </div>
         <div class="grid grid-cols-2 gap-4 pt-3 border-t border-slate-800/70">
           <div>
-            <div class="text-xs text-slate-500">You Owe</div>
+            <div class="text-xs text-slate-500">Total You Need To Pay</div>
             <div id="group-you-owe-total" class="text-sm font-semibold bal-neg mt-0.5">₹0</div>
           </div>
           <div class="text-right">
-            <div class="text-xs text-slate-500">You Are Owed</div>
+            <div class="text-xs text-slate-500">Total You Will Receive</div>
             <div id="group-you-are-owed-total" class="text-sm font-semibold bal-pos mt-0.5">₹0</div>
           </div>
         </div>
 
         <!-- Settlements -->
         <div class="border-t border-slate-800/70 pt-3 mt-3">
-          <div class="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Simplified Debts</div>
+          <div class="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Balances with Members</div>
           <div id="group-settlements" class="space-y-1.5"></div>
         </div>
       </div>
@@ -1067,24 +1067,40 @@
       if (!activeGroup) return
       
       const members = (activeGroup.members || []).filter(m => !m.pending)
-
-      // Calculate the simplified debts currently outstanding
-      // To get current outstanding debts, we run calculations on active expenses/settlements
-      const unsettled = groupExpenses.filter(e => !e.paid || e.isSettlement)
-      const balances = calculateGroupBalances(members, unsettled)
-      const settlements = getSettlements(balances, members)
+      const activeExpenses = groupExpenses.filter(e => !e.paid || e.isSettlement)
+      const pairwise  = calculateUserPairwiseBalances(members, activeExpenses)
 
       // 1. Render suggestions list
       const sugDiv = document.getElementById('settle-suggestions')
       sugDiv.innerHTML = ''
 
-      // Filter settlements involving You (currentUser)
-      const mySettlements = settlements.filter(s => s.from === currentUser.uid || s.to === currentUser.uid)
+      const suggestions = []
+      Object.entries(pairwise).forEach(([uid, bal]) => {
+        const m = members.find(mem => mem.uid === uid)
+        if (!m) return
+        if (bal < -0.01) {
+          suggestions.push({
+            from: currentUser.uid,
+            fromName: 'You',
+            to: uid,
+            toName: m.displayName,
+            amount: Math.abs(bal)
+          })
+        } else if (bal > 0.01) {
+          suggestions.push({
+            from: uid,
+            fromName: m.displayName,
+            to: currentUser.uid,
+            toName: 'You',
+            amount: bal
+          })
+        }
+      })
 
-      if (mySettlements.length === 0) {
+      if (suggestions.length === 0) {
         sugDiv.innerHTML = '<div class="text-xs text-slate-500 italic p-2">No outstanding debts to settle quickly.</div>'
       } else {
-        mySettlements.forEach(s => {
+        suggestions.forEach(s => {
           const div = document.createElement('div')
           div.className = 'flex items-center justify-between p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-sm'
           const label = s.from === currentUser.uid 
@@ -1135,10 +1151,8 @@
       })
 
       // Default selections:
-      // If you owe someone, make You the payer and them the receiver.
-      // If someone owes you, make them the payer and You the receiver.
-      if (mySettlements.length > 0) {
-        const first = mySettlements[0]
+      if (suggestions.length > 0) {
+        const first = suggestions[0]
         payerSelect.value = first.from
         receiverSelect.value = first.to
         document.getElementById('settle-amount').value = first.amount.toFixed(2)
@@ -1300,6 +1314,72 @@
       return settlements
     }
 
+    function calculateUserPairwiseBalances(members, expenses) {
+      const pairwise = {}
+      // Initialize other members with 0
+      members.filter(m => m.uid !== currentUser.uid && !m.pending).forEach(m => {
+        pairwise[m.uid] = 0
+      })
+
+      expenses.forEach(exp => {
+        if (exp.paid && !exp.isSettlement) return
+        const payer = exp.paidBy
+
+        if (exp.isSettlement) {
+          const receiver = exp.splitAmong?.[0]
+          // If payer is currentUser and receiver is other member
+          if (payer === currentUser.uid && (receiver in pairwise)) {
+            pairwise[receiver] += exp.amount
+          }
+          // If payer is other member and receiver is currentUser
+          else if (receiver === currentUser.uid && (payer in pairwise)) {
+            pairwise[payer] -= exp.amount
+          }
+          return
+        }
+
+        // Calculate share
+        let expShare = 0
+        if (exp.splitType === 'custom') {
+          // Custom split
+          if (payer === currentUser.uid) {
+            Object.entries(exp.splits || {}).forEach(([uid, amt]) => {
+              if (uid !== currentUser.uid && (uid in pairwise)) {
+                pairwise[uid] += amt // they owe us their custom share
+              }
+            })
+          } else if (payer in pairwise) {
+            // payer is another member
+            const myShare = exp.splits?.[currentUser.uid] || 0
+            if (myShare > 0) {
+              pairwise[payer] -= myShare // we owe them our custom share
+            }
+          }
+        } else {
+          // Equal split
+          const among = exp.splitAmong || []
+          if (among.length === 0) return
+          const share = exp.amount / among.length
+
+          if (payer === currentUser.uid) {
+            // We paid. For each other member who participated: they owe us their share
+            among.forEach(uid => {
+              if (uid !== currentUser.uid && (uid in pairwise)) {
+                pairwise[uid] += share
+              }
+            })
+          } else if (payer in pairwise) {
+            // Other member paid. If we participated: we owe them our share
+            if (among.includes(currentUser.uid)) {
+              pairwise[payer] -= share
+            }
+          }
+        }
+      })
+
+      return pairwise
+    }
+
     /* ─────────────────────────────────────────────────────────────
        FILTER & RENDER
     ───────────────────────────────────────────────────────────── */
@@ -1322,7 +1402,7 @@
       // An expense is active if it's not individually toggled/settled (paid: true).
       // A settlement is always active.
       const activeExpenses = expenses.filter(e => !e.paid || e.isSettlement)
-      const balances  = calculateGroupBalances(members, activeExpenses)
+      const pairwise  = calculateUserPairwiseBalances(members, activeExpenses)
 
       // 1. Group Total Spent (actual expenses only, excluding settlements)
       const totalSpent = expenses
@@ -1355,27 +1435,56 @@
       // 4. Net Balance
       const myBal = myTotalPaid - myTotalShare
 
-      // Simplified Debts Match
-      const settlements = getSettlements(balances, members)
-      
-      // Calculate total You Owe and You Are Owed from simplified debts
-      let totalYouOwe = 0
-      let totalYouAreOwed = 0
-      settlements.forEach(s => {
-        if (s.from === currentUser.uid) {
-          totalYouOwe += s.amount
-        }
-        if (s.to === currentUser.uid) {
-          totalYouAreOwed += s.amount
-        }
-      })
+      // 5. Display Balances with Members & sum totals
+      const sDiv = document.getElementById('group-settlements')
+      sDiv.innerHTML = ''
+
+      let totalYouNeedToPay = 0
+      let totalYouWillReceive = 0
+
+      // Render each member balance (except yourself)
+      const otherMembers = members.filter(m => m.uid !== currentUser.uid)
+      if (otherMembers.length === 0) {
+        sDiv.innerHTML = '<div class="text-xs text-slate-500 italic p-2">No other group members.</div>'
+      } else {
+        otherMembers.forEach(m => {
+          const bal = pairwise[m.uid] || 0
+          const row = document.createElement('div')
+          row.className = 'flex items-center justify-between p-2.5 rounded-xl border border-slate-800/40 bg-slate-900/20 text-sm'
+          
+          let balText = ''
+          let balClass = ''
+          
+          if (bal > 0.01) {
+            balText = `+₹${bal.toFixed(2)}`
+            balClass = 'bal-pos font-bold'
+            totalYouWillReceive += bal
+          } else if (bal < -0.01) {
+            balText = `-₹${Math.abs(bal).toFixed(2)}`
+            balClass = 'bal-neg font-bold'
+            totalYouNeedToPay += Math.abs(bal)
+          } else {
+            balText = 'Settled Up'
+            balClass = 'text-slate-500 font-medium'
+          }
+
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <div class="avatar-sm flex-shrink-0" style="background:${uidToColor(m.uid)}">${getInitials(m.displayName)}</div>
+              <span class="font-medium text-slate-300">You ↔ ${escHtml(m.displayName)}</span>
+            </div>
+            <span class="${balClass}">${balText}</span>
+          `
+          sDiv.appendChild(row)
+        })
+      }
 
       // Update UI elements
       document.getElementById('group-total-spent').textContent = `₹${totalSpent.toFixed(2)}`
       document.getElementById('group-your-share').textContent  = `₹${myTotalShare.toFixed(2)}`
       document.getElementById('group-you-paid').textContent    = `₹${myTotalPaid.toFixed(2)}`
-      document.getElementById('group-you-owe-total').textContent = `₹${totalYouOwe.toFixed(2)}`
-      document.getElementById('group-you-are-owed-total').textContent = `₹${totalYouAreOwed.toFixed(2)}`
+      document.getElementById('group-you-owe-total').textContent = `₹${totalYouNeedToPay.toFixed(2)}`
+      document.getElementById('group-you-are-owed-total').textContent = `₹${totalYouWillReceive.toFixed(2)}`
 
       const balEl = document.getElementById('group-your-balance')
       if (myBal > 0.01) {
@@ -1387,27 +1496,6 @@
       } else {
         balEl.textContent = '₹0.00'
         balEl.className   = 'text-base font-bold bal-zero mt-0.5'
-      }
-
-      // Display Settlements list (Simplified Debts)
-      const sDiv = document.getElementById('group-settlements')
-      if (settlements.length === 0) {
-        sDiv.innerHTML = '<div class="text-xs bal-pos">✓ All settled up!</div>'
-      } else {
-        sDiv.innerHTML = settlements.map(s => {
-          const isFromMe = s.from === currentUser.uid
-          const isToMe   = s.to   === currentUser.uid
-          const cls      = isFromMe ? 'bal-neg' : isToMe ? 'bal-pos' : 'text-slate-400'
-          const fromLbl  = isFromMe ? 'You'  : s.fromName
-          const toLbl    = isToMe   ? 'you'  : s.toName
-          return `
-            <div class="flex items-center gap-1 text-xs ${cls}">
-              <span class="font-medium">${escHtml(fromLbl)}</span>
-              <span class="text-slate-600">→</span>
-              <span class="font-medium">${escHtml(toLbl)}</span>
-              <span class="ml-auto font-bold">₹${s.amount.toFixed(2)}</span>
-            </div>`
-        }).join('')
       }
     }
 
