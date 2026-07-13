@@ -4,735 +4,1422 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>DhanSplit</title>
+  <title>DhanSplit — Group Expense Splitter</title>
+  <meta name="description" content="Split group expenses with friends. Track who owes whom, settle debts easily with DhanSplit." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Base responsive improvements */
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+
     html {
       font-size: 16px;
       -webkit-text-size-adjust: 100%;
       -webkit-tap-highlight-color: transparent;
     }
-
     body {
       min-height: 100vh;
       min-height: 100dvh;
-      /* Dynamic viewport height for mobile */
       overflow-x: hidden;
+      background: #080c10;
     }
 
-    /* Improved soft card for all devices */
+    /* ── Soft neumorphic card ── */
     .soft-card {
-      background: rgba(255, 255, 255, 0.02);
-      box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.6), -6px -6px 12px rgba(255, 255, 255, 0.01);
-      border: 1px solid rgba(255, 255, 255, 0.03);
+      background: rgba(255,255,255,0.025);
+      box-shadow: 6px 6px 14px rgba(0,0,0,0.65), -4px -4px 10px rgba(255,255,255,0.012);
+      border: 1px solid rgba(255,255,255,0.055);
     }
+    .glass { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 
-    .glass {
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      /* Safari support */
-    }
-
-    /* Mobile-first responsive design */
+    /* ── Layout ── */
     main {
       width: 100%;
       max-width: 28rem;
-      /* 448px */
       margin: 0 auto;
       padding: 1rem;
-      box-sizing: border-box;
     }
 
-    /* Touch-friendly button sizes */
-    button,
-    input,
-    select {
-      min-height: 44px;
-      /* Minimum touch target size */
-      font-size: 16px;
-      /* Prevents zoom on iOS */
+    /* ── Touch targets ── */
+    button { min-height: 36px; cursor: pointer; }
+    input, select, textarea { font-size: 16px; width: 100%; }
+
+    /* ── Screen transition ── */
+    .screen-enter { animation: screenIn 0.22s ease both; }
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Improved input fields for mobile */
-    input,
-    select {
+    /* ── Avatars ── */
+    .avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; flex-shrink: 0; color: #fff;
+    }
+    .avatar-sm {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0; color: #fff;
+    }
+
+    /* ── Group card ── */
+    .group-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 1rem;
+      transition: background 0.15s, transform 0.15s;
+      cursor: pointer;
       width: 100%;
-      box-sizing: border-box;
+      text-align: left;
+      padding: 1rem;
+      display: block;
+    }
+    .group-card:hover  { background: rgba(255,255,255,0.04); }
+    .group-card:active { transform: scale(0.98); }
+
+    /* ── Modal / bottom sheet ── */
+    .modal-overlay {
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    .bottom-sheet {
+      background: #0d1117;
+      border-radius: 1.5rem 1.5rem 0 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: slideUp 0.28s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
     }
 
-    /* Responsive typography */
-    h1 {
-      font-size: clamp(1.25rem, 4vw, 1.5rem);
+    /* ── Balance colours ── */
+    .bal-pos  { color: #4ade80; }
+    .bal-neg  { color: #f87171; }
+    .bal-zero { color: #64748b; }
+
+    /* ── Tab pills ── */
+    .tab-pill {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+      color: #94a3b8;
+    }
+    .tab-pill.active {
+      background: rgba(99,102,241,0.22);
+      border-color: rgba(99,102,241,0.55);
+      color: #a5b4fc;
     }
 
-    .text-2xl {
-      font-size: clamp(1.5rem, 5vw, 1.875rem);
+    /* ── Expense card ── */
+    .expense-card { transition: opacity 0.18s; }
+    .expense-card.settled { opacity: 0.52; }
+
+    /* ── Form fields ── */
+    .field {
+      width: 100%;
+      background: rgba(15,19,26,0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      color: #e2e8f0;
+      transition: border-color 0.15s;
     }
+    .field:focus { outline: none; border-color: #6366f1; }
 
-    .text-xs {
-      font-size: clamp(0.75rem, 3vw, 0.875rem);
-    }
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 
-    .text-sm {
-      font-size: clamp(0.875rem, 3.5vw, 1rem);
-    }
-
-    /* Flexible spacing */
-    .space-y-4>*+* {
-      margin-top: clamp(1rem, 3vw, 1.5rem);
-    }
-
-    .p-4 {
-      padding: clamp(1rem, 3vw, 1.5rem);
-    }
-
-    .p-3 {
-      padding: clamp(0.75rem, 2.5vw, 1rem);
-    }
-
-    .p-2 {
-      padding: clamp(0.5rem, 2vw, 0.75rem);
-    }
-
-    /* Gap utilities for flexbox */
-    .gap-2 {
-      gap: clamp(0.5rem, 2vw, 1rem);
-    }
-
-    /* Improved rounded corners for different screens */
-    .rounded-2xl {
-      border-radius: clamp(0.75rem, 3vw, 1rem);
-    }
-
-    .rounded-xl {
-      border-radius: clamp(0.625rem, 2.5vw, 0.75rem);
-    }
-
-    .rounded-lg {
-      border-radius: clamp(0.5rem, 2vw, 0.625rem);
-    }
-
-    .rounded-md {
-      border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
-    }
-
-    /* Expense list items */
-    #expenses-list .soft-card {
-      transition: transform 0.2s ease, opacity 0.2s ease;
-    }
-
-    #expenses-list .soft-card:active {
-      transform: scale(0.98);
-      opacity: 0.9;
-    }
-
-    /* Footer responsiveness */
-    footer {
-      font-size: clamp(0.75rem, 3vw, 0.875rem);
-      margin-top: 2rem;
-    }
-
-    /* Very small devices (phones under 320px) */
-    @media (max-width: 320px) {
-      main {
-        padding: 0.75rem;
-      }
-
-      .soft-card {
-        box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.01);
-      }
-    }
-
-    /* Large devices (tablets and above) */
+    /* ── Responsive ── */
     @media (min-width: 768px) {
-      main {
-        padding: 1.5rem;
-      }
-
-      body {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+      main { padding: 1.5rem; }
+      body { display: flex; align-items: flex-start; justify-content: center; padding-top: 2rem; }
     }
-
-    /* Prevent horizontal scrolling */
-    @media (max-width: 480px) {
-      .flex.gap-2 {
-        flex-wrap: wrap;
-      }
-
-      .flex.gap-2>* {
-        flex: 1 1 100%;
-        margin-bottom: 0.5rem;
-      }
-    }
-
-    /* Landscape mode adjustments */
-    @media (max-height: 500px) and (orientation: landscape) {
-      main {
-        padding: 0.5rem;
-      }
-
-      #auth,
-      #dashboard {
-        transform: scale(0.95);
-        transform-origin: top center;
-      }
-    }
-
-    /* High DPI displays */
-    @media (-webkit-min-device-pixel-ratio: 2),
-    (min-resolution: 192dpi) {
-      .soft-card {
-        border-width: 0.5px;
-      }
-    }
-
-    /* Reduced motion for accessibility */
+    @media (max-width: 320px)  { main { padding: 0.75rem; } }
     @media (prefers-reduced-motion: reduce) {
-      * {
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
-      }
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
     }
 
-    /* Dark mode enhancements (already in dark mode) */
-    @media (prefers-color-scheme: dark) {
-      .soft-card {
-        background: rgba(255, 255, 255, 0.03);
-      }
+    /* ── Gradient text ── */
+    .grad-text {
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
+
+    /* ── Primary button ── */
+    .btn-primary {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 0.875rem;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 4px 20px rgba(79,70,229,0.35);
+    }
+    .btn-primary:hover   { opacity: 0.9; }
+    .btn-primary:active  { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-green {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 0.875rem;
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 16px rgba(5,150,105,0.3);
+      transition: opacity 0.15s;
+    }
+    .btn-green:hover { opacity: 0.9; }
+
+    /* ── Back button ── */
+    .btn-back {
+      width: 36px; height: 36px;
+      border-radius: 0.6rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; line-height: 1;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+    .btn-back:hover { color: #e2e8f0; }
+
+    /* ── Icon button ── */
+    .btn-icon {
+      width: 36px; height: 36px;
+      border-radius: 0.6rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      color: #94a3b8;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .btn-icon:hover { color: #e2e8f0; }
   </style>
 </head>
 
-<body class="bg-[#0b0f14] text-slate-200 min-h-screen antialiased">
-  <!-- Rest of your HTML remains exactly the same -->
-  <main class="max-w-md mx-auto p-4">
-    <!-- Auth area -->
-    <section id="auth" class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold">DhanSplit</h1>
-        <button id="sign-out" class="hidden px-3 py-1 rounded-md soft-card">Logout</button>
+<body class="bg-[#080c10] text-slate-200 min-h-screen antialiased">
+  <main class="max-w-md mx-auto p-4 pb-10">
+
+    <!-- ══════════════════════════════════════════
+         SCREEN ①  AUTH
+    ══════════════════════════════════════════ -->
+    <section id="screen-auth" class="space-y-5 pt-10">
+      <div class="text-center mb-6">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-3xl flex items-center justify-center text-4xl"
+             style="background:linear-gradient(135deg,#4f46e5,#7c3aed,#db2777); box-shadow:0 8px 32px rgba(79,70,229,0.4)">💸</div>
+        <h1 class="text-2xl font-extrabold grad-text">DhanSplit</h1>
+        <p class="text-sm text-slate-500 mt-1">Group expense splitting, made effortless</p>
       </div>
 
-      <div id="login-card" class="soft-card p-4 rounded-2xl">
-        <p class="text-sm text-slate-400 mb-3">Sign in to start splitting expenses with your roommate.</p>
-        <button id="google-signin" class="w-full py-3 rounded-xl glass border border-slate-700 text-sm font-medium">Sign
-          in with Google</button>
-      </div>
-
-      <div id="friend-card" class="hidden soft-card p-4 rounded-2xl">
-        <p class="text-xs text-slate-400">Enter your roommate's email (this links both users)</p>
-
-        <div class="mt-2 space-y-2">
-          <div class="flex gap-2">
-            <input id="friend-email" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm"
-              placeholder="friend@example.com" />
-            <button id="save-friend" class="px-3 py-2 rounded-lg soft-card">Save</button>
-          </div>
-
-          <!-- Dropdown for previously added friends -->
-          <select id="friend-history"
-            class="w-full bg-[#0f131a] border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-600">
-            <option value="">Select from previous friends</option>
-          </select>
-
-        </div>
-
-        <p id="friend-saved" class="mt-2 text-xs text-green-300 hidden">Friend saved — loading shared expenses...</p>
-
+      <div class="soft-card p-5 rounded-2xl space-y-4">
+        <p class="text-sm text-slate-400 text-center">Sign in to start splitting expenses with your groups</p>
+        <button id="google-signin"
+          class="w-full py-3 rounded-xl glass border border-slate-700 text-sm font-semibold flex items-center justify-center gap-3 hover:border-slate-500 transition-colors">
+          <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Sign in with Google
+        </button>
       </div>
     </section>
 
-    <!-- Dashboard -->
-    <section id="dashboard" class="hidden mt-6 space-y-4">
+    <!-- ══════════════════════════════════════════
+         SCREEN ②  GROUPS LIST
+    ══════════════════════════════════════════ -->
+    <section id="screen-groups-list" class="hidden space-y-4">
+      <!-- Header -->
+      <div class="flex items-center justify-between pt-4 pb-1">
+        <div>
+          <h1 class="text-xl font-extrabold grad-text">DhanSplit</h1>
+          <p id="user-email-display" class="text-xs text-slate-500 truncate max-w-[200px]"></p>
+        </div>
+        <button id="sign-out-btn"
+          class="px-3 py-1.5 rounded-lg soft-card text-xs text-slate-400 hover:text-slate-200 transition-colors">
+          Logout
+        </button>
+      </div>
+
+      <!-- Create group CTA -->
+      <button id="create-group-btn" class="btn-primary flex items-center justify-center gap-2">
+        <span class="text-lg leading-none">+</span> Create New Group
+      </button>
+
+      <!-- Loading -->
+      <div id="groups-loading" class="text-center py-8 text-slate-500 text-sm">Loading groups…</div>
+
+      <!-- Empty state -->
+      <div id="groups-empty" class="hidden text-center py-12">
+        <div class="text-5xl mb-3">👥</div>
+        <p class="text-slate-400 text-sm font-medium">No groups yet</p>
+        <p class="text-slate-600 text-xs mt-1">Create a group to start splitting expenses</p>
+      </div>
+
+      <!-- Group cards -->
+      <div id="groups-list-container" class="space-y-3"></div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN ③  CREATE GROUP
+    ══════════════════════════════════════════ -->
+    <section id="screen-create-group" class="hidden space-y-4">
+      <div class="flex items-center gap-3 pt-4">
+        <button id="back-from-create" class="btn-back soft-card">‹</button>
+        <h2 class="text-lg font-bold">Create Group</h2>
+      </div>
+
+      <div class="soft-card p-4 rounded-2xl space-y-4">
+        <div>
+          <label class="text-xs text-slate-400 mb-1.5 block font-medium">Group Name *</label>
+          <input id="group-name-input" type="text"
+            placeholder="e.g. Goa Trip, Flat Mates, Office Lunch"
+            class="field" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 mb-1.5 block font-medium">
+            Add Members by Email <span class="text-slate-600 font-normal">(one per line, optional)</span>
+          </label>
+          <textarea id="group-members-input" rows="4"
+            placeholder="friend1@gmail.com&#10;friend2@gmail.com"
+            class="field resize-none"></textarea>
+          <p class="text-xs text-slate-600 mt-1.5">
+            You'll be added as admin automatically. Members without accounts will be shown as "pending".
+          </p>
+        </div>
+        <button id="create-group-submit" class="btn-primary">Create Group</button>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN ④  GROUP DASHBOARD
+    ══════════════════════════════════════════ -->
+    <section id="screen-group-dashboard" class="hidden space-y-4">
+      <!-- Header -->
+      <div class="flex items-center gap-3 pt-4">
+        <button id="back-from-group" class="btn-back soft-card">‹</button>
+        <div class="flex-1 min-w-0">
+          <h2 id="group-name-display" class="text-base font-bold truncate"></h2>
+          <p id="group-members-count" class="text-xs text-slate-500"></p>
+        </div>
+        <button id="group-settings-btn" class="btn-icon soft-card" title="Group settings">⚙️</button>
+      </div>
+
+      <!-- Balance Summary Card -->
       <div class="soft-card p-4 rounded-2xl">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-start mb-3">
           <div>
-            <div class="text-xs text-slate-400">Total Spent</div>
-            <div id="total-spent" class="text-2xl font-bold">₹0</div>
+            <div class="text-xs text-slate-500">Total Spent</div>
+            <div id="group-total-spent" class="text-2xl font-extrabold mt-0.5">₹0</div>
           </div>
           <div class="text-right">
-            <div class="text-xs text-slate-400">You</div>
-            <div id="your-spent" class="font-semibold">₹0</div>
-            <div class="text-xs text-slate-400">Roommate</div>
-            <div id="friend-spent" class="font-semibold">₹0</div>
-            <div class="text-xs text-slate-400">Roommate owes you</div>
-            <div id="roommate-owes" class="font-semibold">₹0</div>
+            <div class="text-xs text-slate-500">You paid</div>
+            <div id="group-you-paid" class="font-semibold text-sm">₹0</div>
+            <div class="text-xs text-slate-500 mt-1">Your balance</div>
+            <div id="group-your-balance" class="font-semibold text-sm bal-zero">₹0</div>
           </div>
         </div>
-      </div>
 
-      <!-- Add expense form -->
-      <div class="soft-card p-4 rounded-2xl">
-        <div class="flex items-center gap-2 mb-3">
-          <input id="amount" type="number" placeholder="Amount (₹)"
-            class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm" />
-          <button id="add-expense" class="px-3 py-2 rounded-lg soft-card">Add</button>
-        </div>
-        <input id="note" placeholder="Note (eg. Vegetables)"
-          class="w-full bg-transparent border border-slate-700 rounded-lg p-2 text-sm mb-2" />
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-          <label><input id="split-with" type="checkbox" checked class="mr-2" /> Split equally</label>
+        <!-- Settlements -->
+        <div class="border-t border-slate-800/70 pt-3 mt-1">
+          <div class="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Settlements</div>
+          <div id="group-settlements" class="space-y-1.5"></div>
         </div>
       </div>
 
-      <!-- Sorting & filters -->
+      <!-- Add Expense Button -->
+      <button id="add-expense-btn" class="btn-green flex items-center justify-center gap-2">
+        <span class="text-lg leading-none">+</span> Add Expense
+      </button>
+
+      <!-- Sort & Calendar row -->
       <div class="flex flex-col gap-2">
         <div class="flex justify-between items-center">
-          <h2 id="current-month-display" class="text-lg font-semibold text-slate-200"></h2>
+          <h3 id="current-month-display" class="text-base font-semibold text-slate-200"></h3>
           <div class="relative">
-            <button id="calendar-btn" class="px-3 py-2 rounded-lg soft-card text-sm flex items-center gap-2">
+            <button id="calendar-btn"
+              class="px-3 py-2 rounded-lg soft-card text-xs flex items-center gap-1.5 text-slate-400 hover:text-slate-200 transition-colors">
               <span>📅</span> Calendar
             </button>
-            <!-- Month Selection Dropdown -->
             <div id="month-dropdown"
-              class="hidden absolute right-0 top-full mt-2 w-48 bg-[#0f131a] border border-slate-700 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
-              <!-- Options injected here -->
+              class="hidden absolute right-0 top-full mt-2 w-44 bg-[#0d1117] border border-slate-700/60 rounded-xl shadow-2xl z-50 max-h-56 overflow-y-auto">
             </div>
           </div>
         </div>
-        <div class="flex gap-2">
-          <select id="sort" class="flex-1 bg-transparent border border-slate-700 rounded-lg p-2 text-sm">
-            <option value="date-desc">Date (newest)</option>
-            <option value="date-asc">Date (oldest)</option>
-            <option value="amount-desc">Amount (high)</option>
-            <option value="amount-asc">Amount (low)</option>
-            <option value="unpaid-first">Unpaid first</option>
-          </select>
-        </div>
+        <select id="sort"
+          class="field text-sm text-slate-300">
+          <option value="date-desc">Date (newest first)</option>
+          <option value="date-asc">Date (oldest first)</option>
+          <option value="amount-desc">Amount (high → low)</option>
+          <option value="amount-asc">Amount (low → high)</option>
+          <option value="unpaid-first">Unsettled first</option>
+        </select>
       </div>
-      <button id="clear-all" class="px-3 py-2 rounded-lg soft-card text-sm mt-2">Clear All Expenses</button>
 
-      <!-- Expenses list -->
+      <button id="clear-all"
+        class="px-3 py-2 rounded-lg soft-card text-xs text-slate-500 hover:text-red-400 transition-colors">
+        🗑 Clear All Expenses
+      </button>
+
+      <!-- Expenses List -->
       <div id="expenses-list" class="space-y-3"></div>
-
     </section>
 
-    <!-- <footer class="mt-6 text-xs text-slate-500 text-center">by <a
-        href="https://www.linkedin.com/in/imransiddiqui786/">Md Imran Siddiqui</a>•</footer> -->
-  </main>
+    <!-- ══════════════════════════════════════════
+         SCREEN ⑤  GROUP SETTINGS
+    ══════════════════════════════════════════ -->
+    <section id="screen-group-settings" class="hidden space-y-4">
+      <div class="flex items-center gap-3 pt-4">
+        <button id="back-from-settings" class="btn-back soft-card">‹</button>
+        <h2 class="text-lg font-bold">Group Settings</h2>
+      </div>
 
+      <!-- Members list -->
+      <div class="soft-card p-4 rounded-2xl">
+        <h3 class="text-sm font-semibold mb-3 text-slate-300">Members</h3>
+        <div id="settings-members-list" class="space-y-2"></div>
+      </div>
+
+      <!-- Add member -->
+      <div class="soft-card p-4 rounded-2xl">
+        <h3 class="text-sm font-semibold mb-3 text-slate-300">Add Member by Email</h3>
+        <div class="flex gap-2">
+          <input id="add-member-email" type="email" placeholder="friend@example.com"
+            class="field flex-1" style="width:auto" />
+          <button id="add-member-btn"
+            class="px-4 py-2 rounded-xl soft-card text-sm text-indigo-400 font-semibold hover:text-indigo-300 transition-colors whitespace-nowrap">
+            Add
+          </button>
+        </div>
+        <p id="add-member-status" class="text-xs mt-2 hidden"></p>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="soft-card p-4 rounded-2xl" style="border-color: rgba(153,27,27,0.35)">
+        <h3 class="text-sm font-semibold mb-3 text-red-400">Danger Zone</h3>
+        <button id="delete-group-btn"
+          class="w-full py-2.5 rounded-xl border border-red-800/50 text-red-400 text-sm hover:bg-red-900/20 transition-colors">
+          Delete Group &amp; All Expenses
+        </button>
+      </div>
+    </section>
+
+  </main><!-- /main -->
+
+  <!-- ══════════════════════════════════════════
+       MODAL  ·  ADD / EDIT EXPENSE
+  ══════════════════════════════════════════ -->
+  <div id="modal-expense" class="hidden fixed inset-0 z-50 flex items-end justify-center">
+    <div id="modal-backdrop" class="modal-overlay absolute inset-0"></div>
+    <div class="bottom-sheet relative w-full max-w-md p-5 pb-8 space-y-4">
+
+      <!-- Modal header -->
+      <div class="flex justify-between items-center">
+        <h3 id="modal-title" class="text-base font-bold">Add Expense</h3>
+        <button id="modal-close"
+          class="w-8 h-8 rounded-lg soft-card flex items-center justify-center text-slate-400 hover:text-white transition-colors text-xl leading-none">
+          ×
+        </button>
+      </div>
+
+      <!-- Amount -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Amount *</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+          <input id="exp-amount" type="number" placeholder="0.00" min="0" step="0.01"
+            class="field pl-8" />
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Note</label>
+        <input id="exp-note" type="text" placeholder="e.g. Dinner, Groceries, Cab"
+          class="field" />
+      </div>
+
+      <!-- Paid by -->
+      <div>
+        <label class="text-xs text-slate-500 mb-1 block">Paid by</label>
+        <select id="exp-paid-by" class="field text-sm text-slate-300"></select>
+      </div>
+
+      <!-- Split type -->
+      <div>
+        <label class="text-xs text-slate-500 mb-2 block">Split type</label>
+        <div class="flex gap-2 mb-3">
+          <button id="split-equal-btn" class="tab-pill active flex-1">⚖️ Equal</button>
+          <button id="split-custom-btn" class="tab-pill flex-1">✏️ Custom</button>
+        </div>
+
+        <!-- Equal split members -->
+        <div id="split-equal-section">
+          <p class="text-xs text-slate-500 mb-2">Split among:</p>
+          <div id="equal-split-members" class="space-y-1"></div>
+        </div>
+
+        <!-- Custom split inputs -->
+        <div id="split-custom-section" class="hidden">
+          <p class="text-xs text-slate-500 mb-2">Enter each member's share:</p>
+          <div id="custom-split-inputs" class="space-y-2"></div>
+          <div class="flex justify-between items-center text-xs mt-3 p-2.5 rounded-xl"
+               style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07)">
+            <span class="text-slate-500">Remaining to allocate</span>
+            <span id="custom-remaining" class="font-bold text-amber-400">₹0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="exp-submit" class="btn-primary">Save Expense</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       FIREBASE + APP LOGIC
+  ══════════════════════════════════════════ -->
   <script type="module">
-    // Firebase v9 modular (CDN imports)
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js'
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js'
-    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, query, where, orderBy, getDocs, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js'
+    import { initializeApp }          from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js'
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
+      from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js'
+    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot,
+             query, where, orderBy, getDocs, updateDoc, deleteDoc, serverTimestamp }
+      from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js'
 
-    // TODO: replace with your firebase config
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    /* ─────────────────────────────────────────────────────────────
+       FIREBASE CONFIG  (unchanged)
+    ───────────────────────────────────────────────────────────── */
     const firebaseConfig = {
-      apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
-      authDomain: "dhansplit.firebaseapp.com",
-      projectId: "dhansplit",
-      storageBucket: "dhansplit.firebasestorage.app",
+      apiKey:            "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
+      authDomain:        "dhansplit.firebaseapp.com",
+      projectId:         "dhansplit",
+      storageBucket:     "dhansplit.firebasestorage.app",
       messagingSenderId: "1042555508326",
-      appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
-      measurementId: "G-X8QMR709D2"
-    };
-
-    const app = initializeApp(firebaseConfig)
-    const auth = getAuth(app)
-    const db = getFirestore(app)
-    const provider = new GoogleAuthProvider()
-
-    // UI refs
-    const loginCard = document.getElementById('login-card')
-    const googleBtn = document.getElementById('google-signin')
-    const signOutBtn = document.getElementById('sign-out')
-    const friendCard = document.getElementById('friend-card')
-    const friendEmailInput = document.getElementById('friend-email')
-    const saveFriendBtn = document.getElementById('save-friend')
-    const friendSaved = document.getElementById('friend-saved')
-
-    const dashboard = document.getElementById('dashboard')
-    const totalSpentEl = document.getElementById('total-spent')
-    const yourSpentEl = document.getElementById('your-spent')
-    const friendSpentEl = document.getElementById('friend-spent')
-    const amountInput = document.getElementById('amount')
-    const noteInput = document.getElementById('note')
-    const addBtn = document.getElementById('add-expense')
-    const expensesList = document.getElementById('expenses-list')
-    const sortSelect = document.getElementById('sort')
-    const friendHistorySelect = document.getElementById('friend-history')
-
-    // Calendar Refs
-    const calendarBtn = document.getElementById('calendar-btn')
-    const monthDropdown = document.getElementById('month-dropdown')
-    const currentMonthDisplay = document.getElementById('current-month-display')
-
-    let currentUser = null
-    let friendEmail = null
-    let pairId = null
-    let unsubscribeExpenses = null
-
-    // State for filtering
-    let allItems = []
-    let selectedDate = new Date() // Defaults to current month
-
-    // helpers
-    function makePairId(a, b) {
-      if (!a || !b) return null
-      const aL = a.toLowerCase().trim(), bL = b.toLowerCase().trim()
-      return [aL, bL].sort().join('_')
+      appId:             "1:1042555508326:web:f43de6b0568e4ae479bfa7",
+      measurementId:     "G-X8QMR709D2"
     }
 
-    // Auth flows
-    googleBtn.addEventListener('click', async () => {
-      try {
-        await signInWithPopup(auth, provider)
-      } catch (e) { console.error(e); alert('Sign in failed') }
+    const app      = initializeApp(firebaseConfig)
+    const auth     = getAuth(app)
+    const db       = getFirestore(app)
+    const provider = new GoogleAuthProvider()
+
+    /* ─────────────────────────────────────────────────────────────
+       APP STATE
+    ───────────────────────────────────────────────────────────── */
+    let currentUser         = null
+    let activeGroup         = null   // { id, name, members[], memberUids[], createdBy }
+    let groupExpenses       = []     // all expenses for active group (all months)
+    let allItems            = []     // same reference – used by calendar/filter
+    let selectedDate        = new Date()
+    let unsubscribeExpenses = null
+    let unsubscribeGroups   = null
+    let editingExpenseId    = null   // null = add mode
+    let currentSplitType    = 'equal'
+
+    /* ─────────────────────────────────────────────────────────────
+       SCREEN MANAGEMENT
+    ───────────────────────────────────────────────────────────── */
+    const ALL_SCREENS = [
+      'screen-auth',
+      'screen-groups-list',
+      'screen-create-group',
+      'screen-group-dashboard',
+      'screen-group-settings'
+    ]
+
+    function showScreen(id) {
+      ALL_SCREENS.forEach(s => {
+        const el = document.getElementById(s)
+        if (el) { el.classList.add('hidden'); el.classList.remove('screen-enter') }
+      })
+      const target = document.getElementById(id)
+      if (target) {
+        target.classList.remove('hidden')
+        void target.offsetWidth          // reflow → restart animation
+        target.classList.add('screen-enter')
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       AUTH
+    ───────────────────────────────────────────────────────────── */
+    document.getElementById('google-signin').addEventListener('click', async () => {
+      try { await signInWithPopup(auth, provider) }
+      catch (e) { console.error(e); alert('Sign-in failed: ' + e.message) }
     })
 
-    signOutBtn.addEventListener('click', () => signOut(auth))
+    document.getElementById('sign-out-btn').addEventListener('click', () => signOut(auth))
 
     onAuthStateChanged(auth, async user => {
       currentUser = user
       if (user) {
-        loginCard.classList.add('hidden')
-        signOutBtn.classList.remove('hidden')
-        friendCard.classList.remove('hidden')
-        dashboard.classList.remove('hidden')
-
-        // **load from localStorage first**
-        const savedEmail = localStorage.getItem('friendEmail')
-        if (savedEmail) {
-          friendEmail = savedEmail
-          friendEmailInput.value = friendEmail
-          friendSaved.classList.remove('hidden')
-          setupExpenseListener()
-          populateFriendHistory()
-        } else {
-          // fallback: load from Firestore
-          try {
-            const read = await fetchUserDoc(user.uid)
-            if (read && read.friendEmail) {
-              friendEmail = read.friendEmail
-              friendEmailInput.value = friendEmail
-              friendSaved.classList.remove('hidden')
-              setupExpenseListener()
-            }
-          } catch (e) { console.log('no user doc yet') }
-        }
-
+        await ensureUserDoc(user)
+        document.getElementById('user-email-display').textContent = user.email
+        showScreen('screen-groups-list')
+        loadUserGroups()
         updateMonthDisplay()
-
       } else {
-        loginCard.classList.remove('hidden')
-        signOutBtn.classList.add('hidden')
-        friendCard.classList.add('hidden')
-        dashboard.classList.add('hidden')
-        if (unsubscribeExpenses) unsubscribeExpenses()
+        cleanupListeners()
+        activeGroup    = null
+        groupExpenses  = []
+        allItems       = []
+        showScreen('screen-auth')
       }
     })
 
-    async function fetchUserDoc(uid) {
-      const d = doc(db, 'users', uid)
+    function cleanupListeners() {
+      if (unsubscribeExpenses) { unsubscribeExpenses(); unsubscribeExpenses = null }
+      if (unsubscribeGroups)   { unsubscribeGroups();   unsubscribeGroups   = null }
+    }
+
+    async function ensureUserDoc(user) {
       try {
-        // get via getDocs isn't ideal but easier in this single file example
-        const snap = await getDocs(query(collection(db, 'users'), where('uid', '==', uid)))
-        if (!snap.empty) {
-          const docdata = snap.docs[0].data()
-          return docdata
-        }
-      } catch (e) { console.error(e) }
-      return null
+        await setDoc(doc(db, 'users', user.uid), {
+          uid:         user.uid,
+          email:       user.email.toLowerCase(),
+          displayName: user.displayName || user.email.split('@')[0],
+          updatedAt:   serverTimestamp()
+        }, { merge: true })
+      } catch (e) { console.error('ensureUserDoc:', e) }
     }
 
-    saveFriendBtn.addEventListener('click', async () => {
-      const val = friendEmailInput.value.trim().toLowerCase()
-      if (!val || !currentUser) { alert('Enter valid email'); return }
+    /* ─────────────────────────────────────────────────────────────
+       GROUPS LIST
+    ───────────────────────────────────────────────────────────── */
+    function loadUserGroups() {
+      if (!currentUser) return
+      if (unsubscribeGroups) unsubscribeGroups()
 
-      friendEmail = val
-      pairId = makePairId(currentUser.email, friendEmail)
+      document.getElementById('groups-loading').classList.remove('hidden')
+      document.getElementById('groups-empty').classList.add('hidden')
+      document.getElementById('groups-list-container').innerHTML = ''
 
-      // save to Firestore
-      await setDoc(doc(db, 'users', currentUser.uid), {
-        uid: currentUser.uid,
-        email: currentUser.email,
-        friendEmail,
-        pairId,
-        updatedAt: serverTimestamp()
+      // Attempt ordered query; gracefully fall back if composite index missing
+      const listen = (withOrder) => {
+        const q = withOrder
+          ? query(collection(db, 'groups'), where('memberUids', 'array-contains', currentUser.uid), orderBy('createdAt', 'desc'))
+          : query(collection(db, 'groups'), where('memberUids', 'array-contains', currentUser.uid))
+
+        return onSnapshot(q, snap => {
+          document.getElementById('groups-loading').classList.add('hidden')
+          let groups = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          if (!withOrder) groups.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+          renderGroupList(groups)
+        }, err => {
+          if (withOrder && (err.code === 'failed-precondition' || err.code === 'unimplemented')) {
+            unsubscribeGroups = listen(false)
+          } else {
+            console.error('Groups listener:', err)
+            document.getElementById('groups-loading').classList.add('hidden')
+          }
+        })
+      }
+      unsubscribeGroups = listen(true)
+    }
+
+    function renderGroupList(groups) {
+      const container = document.getElementById('groups-list-container')
+      const empty     = document.getElementById('groups-empty')
+      container.innerHTML = ''
+
+      if (groups.length === 0) { empty.classList.remove('hidden'); return }
+      empty.classList.add('hidden')
+
+      groups.forEach(group => {
+        const count   = group.members?.length || 0
+        const isAdmin = group.createdBy === currentUser.uid
+        const color   = uidToColor(group.id)
+
+        const card = document.createElement('div')
+        card.className = 'group-card'
+        card.setAttribute('role', 'button')
+        card.setAttribute('tabindex', '0')
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="avatar" style="background:${color}">${getInitials(group.name)}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm text-slate-100">${escHtml(group.name)}</div>
+              <div class="text-xs text-slate-500 mt-0.5">
+                ${count} member${count !== 1 ? 's' : ''}${isAdmin ? ' · Admin' : ''}
+              </div>
+            </div>
+            <div class="text-slate-600 text-xl">›</div>
+          </div>`
+        card.addEventListener('click',  () => selectGroup(group))
+        card.addEventListener('keydown', e => { if (e.key === 'Enter') selectGroup(group) })
+        container.appendChild(card)
+      })
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       CREATE GROUP
+    ───────────────────────────────────────────────────────────── */
+    document.getElementById('create-group-btn').addEventListener('click', () => {
+      document.getElementById('group-name-input').value    = ''
+      document.getElementById('group-members-input').value = ''
+      showScreen('screen-create-group')
+    })
+
+    document.getElementById('back-from-create').addEventListener('click', () => showScreen('screen-groups-list'))
+
+    document.getElementById('create-group-submit').addEventListener('click', async () => {
+      const name      = document.getElementById('group-name-input').value.trim()
+      const rawEmails = document.getElementById('group-members-input').value.trim()
+      if (!name) { alert('Please enter a group name'); return }
+
+      const btn = document.getElementById('create-group-submit')
+      btn.disabled    = true
+      btn.textContent = 'Creating…'
+
+      try {
+        const creator = {
+          uid:         currentUser.uid,
+          email:       currentUser.email.toLowerCase(),
+          displayName: currentUser.displayName || currentUser.email.split('@')[0],
+          role:        'admin'
+        }
+        const members    = [creator]
+        const memberUids = [currentUser.uid]
+
+        // Resolve invited emails
+        if (rawEmails) {
+          const emails = rawEmails
+            .split('\n')
+            .map(e => e.trim().toLowerCase())
+            .filter(e => e.includes('@') && e !== currentUser.email.toLowerCase())
+          for (const email of emails) {
+            const snap = await getDocs(query(collection(db, 'users'), where('email', '==', email)))
+            if (!snap.empty) {
+              const u = snap.docs[0].data()
+              if (!memberUids.includes(u.uid)) {
+                members.push({ uid: u.uid, email: u.email, displayName: u.displayName || email.split('@')[0], role: 'member' })
+                memberUids.push(u.uid)
+              }
+            } else {
+              // Not registered yet — add as pending
+              if (!members.find(m => m.email === email)) {
+                const pendingUid = 'pending__' + email.replace(/[^a-z0-9]/g, '_')
+                members.push({ uid: pendingUid, email, displayName: email.split('@')[0], role: 'member', pending: true })
+              }
+            }
+          }
+        }
+
+        await addDoc(collection(db, 'groups'), {
+          name, createdBy: currentUser.uid, createdAt: serverTimestamp(), members, memberUids
+        })
+        showScreen('screen-groups-list')
+      } catch (e) {
+        console.error(e)
+        alert('Failed to create group: ' + e.message)
+      } finally {
+        btn.disabled    = false
+        btn.textContent = 'Create Group'
+      }
+    })
+
+    /* ─────────────────────────────────────────────────────────────
+       SELECT GROUP → GROUP DASHBOARD
+    ───────────────────────────────────────────────────────────── */
+    function selectGroup(group) {
+      activeGroup  = group
+      selectedDate = new Date()   // reset to current month on group entry
+
+      document.getElementById('group-name-display').textContent = group.name
+      const count = group.members?.length || 0
+      document.getElementById('group-members-count').textContent =
+        `${count} member${count !== 1 ? 's' : ''}`
+
+      showScreen('screen-group-dashboard')
+      updateMonthDisplay()
+      setupGroupExpenseListener(group.id)
+    }
+
+    document.getElementById('back-from-group').addEventListener('click', () => {
+      cleanupListeners()
+      activeGroup   = null
+      groupExpenses = []
+      allItems      = []
+      document.getElementById('expenses-list').innerHTML = ''
+      showScreen('screen-groups-list')
+    })
+
+    document.getElementById('group-settings-btn').addEventListener('click', () => {
+      renderGroupSettings()
+      showScreen('screen-group-settings')
+    })
+
+    document.getElementById('back-from-settings').addEventListener('click', () => {
+      showScreen('screen-group-dashboard')
+    })
+
+    /* ─────────────────────────────────────────────────────────────
+       EXPENSE REAL-TIME LISTENER
+    ───────────────────────────────────────────────────────────── */
+    function setupGroupExpenseListener(groupId) {
+      if (unsubscribeExpenses) { unsubscribeExpenses(); unsubscribeExpenses = null }
+      groupExpenses = []
+      allItems      = []
+
+      const listen = (withOrder) => {
+        const q = withOrder
+          ? query(collection(db, 'groups', groupId, 'expenses'), orderBy('createdAt', 'desc'))
+          : collection(db, 'groups', groupId, 'expenses')
+
+        return onSnapshot(q, snap => {
+          groupExpenses = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          if (!withOrder) groupExpenses.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+          allItems = groupExpenses
+          applyFilters()
+          generateMonthList()
+        }, err => {
+          if (withOrder && (err.code === 'failed-precondition' || err.code === 'unimplemented')) {
+            unsubscribeExpenses = listen(false)
+          } else {
+            console.error('Expenses listener:', err)
+          }
+        })
+      }
+      unsubscribeExpenses = listen(true)
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       ADD / EDIT EXPENSE MODAL
+    ───────────────────────────────────────────────────────────── */
+    document.getElementById('add-expense-btn').addEventListener('click', () => openExpenseModal(null))
+    document.getElementById('modal-close').addEventListener('click', closeExpenseModal)
+    document.getElementById('modal-backdrop').addEventListener('click', closeExpenseModal)
+
+    function openExpenseModal(expense) {
+      editingExpenseId = expense?.id || null
+      document.getElementById('modal-title').textContent = editingExpenseId ? 'Edit Expense' : 'Add Expense'
+      document.getElementById('exp-amount').value = expense?.amount ?? ''
+      document.getElementById('exp-note').value   = expense?.note   ?? ''
+
+      // Populate "Paid by"
+      const realMembers  = (activeGroup.members || []).filter(m => !m.pending)
+      const paidBySelect = document.getElementById('exp-paid-by')
+      paidBySelect.innerHTML = ''
+      realMembers.forEach(m => {
+        const opt = document.createElement('option')
+        opt.value       = m.uid
+        opt.textContent = m.uid === currentUser.uid ? `You (${m.displayName})` : m.displayName
+        if (expense ? m.uid === expense.paidBy : m.uid === currentUser.uid) opt.selected = true
+        paidBySelect.appendChild(opt)
       })
 
-      // 🧠 Save to localStorage (multiple)
-      let existingFriends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
-      if (!existingFriends.includes(friendEmail)) {
-        existingFriends.push(friendEmail)
-        localStorage.setItem('friendEmails', JSON.stringify(existingFriends))
+      // Split type
+      currentSplitType = expense?.splitType || 'equal'
+      setSplitType(currentSplitType, false)
+      renderEqualSplitMembers(expense)
+      renderCustomSplitInputs(expense)
+      updateCustomRemaining()
+
+      document.getElementById('modal-expense').classList.remove('hidden')
+      setTimeout(() => document.getElementById('exp-amount').focus(), 300)
+    }
+
+    function closeExpenseModal() {
+      document.getElementById('modal-expense').classList.add('hidden')
+      editingExpenseId = null
+    }
+
+    document.getElementById('split-equal-btn').addEventListener('click',  () => setSplitType('equal',  true))
+    document.getElementById('split-custom-btn').addEventListener('click', () => setSplitType('custom', true))
+
+    function setSplitType(type, reRender = false) {
+      currentSplitType = type
+      const eBtn = document.getElementById('split-equal-btn')
+      const cBtn = document.getElementById('split-custom-btn')
+      const eSec = document.getElementById('split-equal-section')
+      const cSec = document.getElementById('split-custom-section')
+
+      if (type === 'equal') {
+        eBtn.classList.add('active');    cBtn.classList.remove('active')
+        eSec.classList.remove('hidden'); cSec.classList.add('hidden')
+      } else {
+        cBtn.classList.add('active');    eBtn.classList.remove('active')
+        cSec.classList.remove('hidden'); eSec.classList.add('hidden')
+        if (reRender) renderCustomSplitInputs(null)
+        updateCustomRemaining()
+      }
+    }
+
+    function renderEqualSplitMembers(expense) {
+      const container = document.getElementById('equal-split-members')
+      container.innerHTML = ''
+      const members = (activeGroup.members || []).filter(m => !m.pending)
+      members.forEach(m => {
+        const checked = expense ? (expense.splitAmong || []).includes(m.uid) : true
+        const lbl = document.createElement('label')
+        lbl.className = 'flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800/40 cursor-pointer transition-colors'
+        lbl.innerHTML = `
+          <input type="checkbox" class="split-member-check w-4 h-4 accent-indigo-500" value="${m.uid}" ${checked ? 'checked' : ''}>
+          <div class="avatar-sm" style="background:${uidToColor(m.uid)}">${getInitials(m.displayName)}</div>
+          <span class="text-sm">${m.uid === currentUser.uid ? `You (${m.displayName})` : m.displayName}</span>
+        `
+        container.appendChild(lbl)
+      })
+    }
+
+    function renderCustomSplitInputs(expense) {
+      const container = document.getElementById('custom-split-inputs')
+      container.innerHTML = ''
+      const members = (activeGroup.members || []).filter(m => !m.pending)
+      members.forEach(m => {
+        const val = expense?.splits?.[m.uid] ?? ''
+        const div = document.createElement('div')
+        div.className = 'flex items-center gap-2'
+        div.innerHTML = `
+          <div class="avatar-sm flex-shrink-0" style="background:${uidToColor(m.uid)}">${getInitials(m.displayName)}</div>
+          <span class="text-sm flex-1 min-w-0 truncate">${m.uid === currentUser.uid ? 'You' : m.displayName}</span>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <span class="text-slate-400 text-sm">₹</span>
+            <input type="number" class="custom-split-input w-24 bg-[#0b0f14] border border-slate-700/70 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:border-indigo-500 transition-colors"
+                   data-uid="${m.uid}" value="${val}" placeholder="0" min="0" step="0.01">
+          </div>
+        `
+        container.appendChild(div)
+      })
+      container.querySelectorAll('.custom-split-input').forEach(inp => inp.addEventListener('input', updateCustomRemaining))
+    }
+
+    function updateCustomRemaining() {
+      const total = parseFloat(document.getElementById('exp-amount').value) || 0
+      let sum = 0
+      document.querySelectorAll('.custom-split-input').forEach(inp => sum += parseFloat(inp.value) || 0)
+      const rem = total - sum
+      const el  = document.getElementById('custom-remaining')
+      el.textContent = `₹${Math.abs(rem).toFixed(2)}${rem < 0 ? ' (over)' : ''}`
+      el.className = Math.abs(rem) < 0.01 ? 'font-bold text-green-400' : 'font-bold text-amber-400'
+    }
+
+    document.getElementById('exp-amount').addEventListener('input', updateCustomRemaining)
+
+    /* ── Submit expense ── */
+    document.getElementById('exp-submit').addEventListener('click', async () => {
+      const amount = parseFloat(document.getElementById('exp-amount').value)
+      const note   = document.getElementById('exp-note').value.trim()
+      const paidBy = document.getElementById('exp-paid-by').value
+
+      if (!amount || amount <= 0) { alert('Enter a valid amount'); return }
+      if (!paidBy)                { alert('Select who paid');       return }
+
+      const paidByMember = (activeGroup.members || []).find(m => m.uid === paidBy)
+
+      const expenseData = {
+        amount,
+        note,
+        paidBy,
+        paidByEmail: paidByMember?.email       || '',
+        paidByName:  paidByMember?.displayName || '',
+        ownerUid:    currentUser.uid,
+        ownerEmail:  currentUser.email,
+        splitType:   currentSplitType,
+        updatedAt:   serverTimestamp()
       }
 
-      // Also save current friend for auto-load next time
-      localStorage.setItem('friendEmail', friendEmail)
+      if (currentSplitType === 'equal') {
+        const checks     = document.querySelectorAll('.split-member-check:checked')
+        const splitAmong = Array.from(checks).map(c => c.value)
+        if (splitAmong.length === 0) { alert('Select at least one member to split with'); return }
+        expenseData.splitAmong = splitAmong
+        expenseData.splits     = {}
+      } else {
+        // Custom
+        const inputs = document.querySelectorAll('.custom-split-input')
+        const splits = {}
+        let sumAllocated = 0
+        inputs.forEach(inp => {
+          const v = parseFloat(inp.value) || 0
+          if (v > 0) { splits[inp.dataset.uid] = v; sumAllocated += v }
+        })
+        if (Math.abs(sumAllocated - amount) > 0.01) {
+          alert(`Split amounts (₹${sumAllocated.toFixed(2)}) must equal the total (₹${amount.toFixed(2)})`); return
+        }
+        expenseData.splits     = splits
+        expenseData.splitAmong = Object.keys(splits)
+      }
 
-      friendSaved.classList.remove('hidden')
-      populateFriendHistory()
-      setupExpenseListener()
+      const btn = document.getElementById('exp-submit')
+      btn.disabled    = true
+      btn.textContent = 'Saving…'
+
+      try {
+        if (editingExpenseId) {
+          await updateDoc(doc(db, 'groups', activeGroup.id, 'expenses', editingExpenseId), expenseData)
+        } else {
+          expenseData.paid      = false
+          expenseData.createdAt = serverTimestamp()
+          await addDoc(collection(db, 'groups', activeGroup.id, 'expenses'), expenseData)
+        }
+        closeExpenseModal()
+      } catch (e) {
+        console.error(e)
+        alert('Failed to save expense: ' + e.message)
+      } finally {
+        btn.disabled    = false
+        btn.textContent = 'Save Expense'
+      }
     })
 
+    /* ─────────────────────────────────────────────────────────────
+       BALANCE CALCULATIONS
+    ───────────────────────────────────────────────────────────── */
+    function calculateGroupBalances(members, expenses) {
+      // netBalance[uid] > 0  → others owe them  (creditor)
+      // netBalance[uid] < 0  → they owe others  (debtor)
+      const balances = {}
+      members.filter(m => !m.pending).forEach(m => { balances[m.uid] = 0 })
 
-    const clearAllBtn = document.getElementById('clear-all')
+      expenses.forEach(exp => {
+        if (exp.paid) return
+        const payer = exp.paidBy
+        if (!(payer in balances)) return
 
-    clearAllBtn.addEventListener('click', async () => {
-      if (!currentUser || !friendEmail) return
-      if (!confirm('Are you sure you want to delete ALL expenses for this friend?')) return
-
-      // fetch all expenses for this pair
-      const q = query(collection(db, 'expenses'), where('pairId', '==', pairId))
-      const snap = await getDocs(q)
-      const batchDeletes = snap.docs.map(docSnap => deleteDoc(doc(db, 'expenses', docSnap.id)))
-      await Promise.all(batchDeletes)
-    })
-
-
-    // listener for expenses for this pair
-    async function setupExpenseListener() {
-      if (!currentUser || !friendEmail) return
-      pairId = makePairId(currentUser.email, friendEmail)
-      // unsubscribe previous
-      if (unsubscribeExpenses) unsubscribeExpenses()
-      const expensesQ = query(collection(db, 'expenses'), where('pairId', '==', pairId), orderBy('createdAt', 'desc'))
-      unsubscribeExpenses = onSnapshot(expensesQ, snap => {
-        allItems = []
-        snap.forEach(doc => allItems.push({ id: doc.id, ...doc.data() }))
-        applyFilters() // Filter and render
-        generateMonthList() // Update calendar options
+        if (!exp.splitType || exp.splitType === 'equal') {
+          const among = (exp.splitAmong || []).filter(uid => uid in balances)
+          if (among.length === 0) return
+          const share = exp.amount / among.length
+          among.forEach(uid => {
+            if (uid !== payer) {
+              balances[uid]  -= share   // debtor
+              balances[payer] += share  // creditor
+            }
+          })
+        } else {
+          // Custom
+          Object.entries(exp.splits || {}).forEach(([uid, amt]) => {
+            if (!(uid in balances)) return
+            if (uid !== payer && amt > 0) {
+              balances[uid]  -= amt
+              balances[payer] += amt
+            }
+          })
+        }
       })
+
+      return balances
     }
 
-    // Filter Logic
+    function getSettlements(balances, members) {
+      const memberMap = {}
+      members.filter(m => !m.pending).forEach(m => { memberMap[m.uid] = m })
+
+      const creditors = [], debtors = []
+      Object.entries(balances).forEach(([uid, bal]) => {
+        if (bal >  0.01) creditors.push({ uid, amount:  bal })
+        if (bal < -0.01) debtors.push(  { uid, amount: -bal })
+      })
+
+      const creds = creditors.map(c => ({ ...c }))
+      const debts = debtors  .map(d => ({ ...d }))
+
+      const settlements = []
+      let i = 0, j = 0
+      while (i < creds.length && j < debts.length) {
+        const amount = Math.min(creds[i].amount, debts[j].amount)
+        settlements.push({
+          from:     debts[j].uid,
+          fromName: memberMap[debts[j].uid]?.displayName || '?',
+          to:       creds[i].uid,
+          toName:   memberMap[creds[i].uid]?.displayName || '?',
+          amount:   Math.round(amount * 100) / 100
+        })
+        creds[i].amount -= amount
+        debts[j].amount -= amount
+        if (creds[i].amount < 0.01) i++
+        if (debts[j].amount < 0.01) j++
+      }
+      return settlements
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       FILTER & RENDER
+    ───────────────────────────────────────────────────────────── */
     function applyFilters() {
       const filtered = allItems.filter(item => {
-        if (!item.createdAt) return false; // Skip if no date
-        const date = item.createdAt.toDate();
-        return date.getMonth() === selectedDate.getMonth() &&
-          date.getFullYear() === selectedDate.getFullYear();
-      });
-      renderExpenses(filtered);
+        if (!item.createdAt) return true
+        const d = item.createdAt.toDate()
+        return d.getMonth() === selectedDate.getMonth() &&
+               d.getFullYear() === selectedDate.getFullYear()
+      })
+      renderExpenses(filtered)
+      renderGroupSummary(allItems)   // summary always uses all expenses (not month-filtered)
     }
 
+    function renderGroupSummary(expenses) {
+      if (!activeGroup) return
+      const members   = (activeGroup.members || []).filter(m => !m.pending)
+      const unsettled = expenses.filter(e => !e.paid)
+      const balances  = calculateGroupBalances(members, unsettled)
+
+      // Totals
+      const total   = unsettled.reduce((s, e) => s + e.amount, 0)
+      const youPaid = unsettled.filter(e => e.paidBy === currentUser.uid).reduce((s, e) => s + e.amount, 0)
+      const myBal   = balances[currentUser.uid] || 0
+
+      document.getElementById('group-total-spent').textContent = `₹${total.toFixed(2)}`
+      document.getElementById('group-you-paid').textContent    = `₹${youPaid.toFixed(2)}`
+
+      const balEl = document.getElementById('group-your-balance')
+      if (myBal > 0.01) {
+        balEl.textContent = `+₹${myBal.toFixed(2)}`
+        balEl.className   = 'font-semibold text-sm bal-pos'
+      } else if (myBal < -0.01) {
+        balEl.textContent = `-₹${Math.abs(myBal).toFixed(2)}`
+        balEl.className   = 'font-semibold text-sm bal-neg'
+      } else {
+        balEl.textContent = '₹0 ✓'
+        balEl.className   = 'font-semibold text-sm bal-zero'
+      }
+
+      // Settlements
+      const sDiv       = document.getElementById('group-settlements')
+      const settlements = getSettlements(balances, members)
+
+      if (settlements.length === 0) {
+        sDiv.innerHTML = '<div class="text-xs bal-pos">✓ All settled up!</div>'
+      } else {
+        sDiv.innerHTML = settlements.map(s => {
+          const isFromMe = s.from === currentUser.uid
+          const isToMe   = s.to   === currentUser.uid
+          const cls      = isFromMe ? 'bal-neg' : isToMe ? 'bal-pos' : 'text-slate-400'
+          const fromLbl  = isFromMe ? 'You'  : s.fromName
+          const toLbl    = isToMe   ? 'you'  : s.toName
+          return `
+            <div class="flex items-center gap-1 text-xs ${cls}">
+              <span class="font-medium">${escHtml(fromLbl)}</span>
+              <span class="text-slate-600">→</span>
+              <span class="font-medium">${escHtml(toLbl)}</span>
+              <span class="ml-auto font-bold">₹${s.amount.toFixed(2)}</span>
+            </div>`
+        }).join('')
+      }
+    }
+
+    function renderExpenses(items) {
+      const sort = document.getElementById('sort').value
+      let list   = [...items]
+
+      if      (sort === 'date-asc')     list.reverse()
+      else if (sort === 'amount-desc')  list.sort((a, b) => b.amount - a.amount)
+      else if (sort === 'amount-asc')   list.sort((a, b) => a.amount - b.amount)
+      else if (sort === 'unpaid-first') list.sort((a, b) => a.paid === b.paid ? 0 : a.paid ? 1 : -1)
+
+      const el = document.getElementById('expenses-list')
+      el.innerHTML = ''
+
+      if (list.length === 0) {
+        el.innerHTML = '<div class="text-center text-slate-600 py-10 text-sm">No expenses this month</div>'
+        return
+      }
+
+      list.forEach(exp => {
+        const ts        = exp.createdAt?.toDate?.() || null
+        const formatted = ts ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+        const paidByName = exp.paidBy === currentUser.uid
+          ? 'You'
+          : (exp.paidByName || exp.paidByEmail || 'Someone')
+
+        // Split label
+        let splitInfo = ''
+        if (exp.splitType === 'custom') {
+          const myShare = exp.splits?.[currentUser.uid]
+          splitInfo = myShare != null ? `Your share: ₹${Number(myShare).toFixed(2)}` : 'Custom split'
+        } else {
+          const count  = (exp.splitAmong || []).length
+          const share  = count > 0 ? (exp.amount / count).toFixed(2) : '0.00'
+          const inSplit = (exp.splitAmong || []).includes(currentUser.uid)
+          splitInfo = inSplit ? `Your share: ₹${share}` : `Split among ${count}`
+        }
+
+        const isOwner   = exp.ownerUid === currentUser.uid
+        const isAdmin   = activeGroup?.createdBy === currentUser.uid
+        const canModify = isOwner || isAdmin
+
+        const card = document.createElement('div')
+        card.className = `expense-card soft-card p-3 rounded-xl${exp.paid ? ' settled' : ''}`
+        card.innerHTML = `
+          <div class="flex justify-between items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-bold">₹${Number(exp.amount).toFixed(2)}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded-full font-medium
+                  ${exp.paid ? 'bg-emerald-900/60 text-emerald-400' : 'bg-amber-900/60 text-amber-400'}">
+                  ${exp.paid ? 'Settled' : 'Unsettled'}
+                </span>
+              </div>
+              ${exp.note ? `<div class="text-xs text-slate-300 mt-0.5">${escHtml(exp.note)}</div>` : ''}
+              <div class="text-xs text-slate-500 mt-1">${formatted}</div>
+              <div class="text-xs text-slate-400 mt-0.5">
+                Paid by <span class="text-slate-300 font-medium">${escHtml(paidByName)}</span>
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">${splitInfo}</div>
+            </div>
+            ${canModify ? `
+            <div class="flex flex-col gap-1 flex-shrink-0">
+              <button data-edit="${exp.id}"
+                class="px-2.5 py-1 rounded-lg soft-card text-xs text-slate-300 hover:text-indigo-300 transition-colors">
+                Edit
+              </button>
+              <button data-delete="${exp.id}"
+                class="px-2.5 py-1 rounded-lg soft-card text-xs text-slate-300 hover:text-red-400 transition-colors">
+                Delete
+              </button>
+              <button data-paid="${exp.id}" data-current="${exp.paid}"
+                class="px-2.5 py-1 rounded-lg soft-card text-xs transition-colors
+                  ${exp.paid ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}">
+                ${exp.paid ? 'Unsettle' : 'Settle'}
+              </button>
+            </div>` : ''}
+          </div>`
+        el.appendChild(card)
+      })
+
+      // Attach handlers
+      el.querySelectorAll('[data-delete]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-delete')
+          if (confirm('Delete this expense?'))
+            await deleteDoc(doc(db, 'groups', activeGroup.id, 'expenses', id))
+        })
+      )
+
+      el.querySelectorAll('[data-paid]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const id      = btn.getAttribute('data-paid')
+          const current = btn.getAttribute('data-current') === 'true'
+          await updateDoc(doc(db, 'groups', activeGroup.id, 'expenses', id),
+            { paid: !current, updatedAt: serverTimestamp() })
+        })
+      )
+
+      el.querySelectorAll('[data-edit]').forEach(btn =>
+        btn.addEventListener('click', () => {
+          const id  = btn.getAttribute('data-edit')
+          const exp = groupExpenses.find(e => e.id === id)
+          if (exp) openExpenseModal(exp)
+        })
+      )
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       GROUP SETTINGS  (members + add + remove + delete group)
+    ───────────────────────────────────────────────────────────── */
+    function renderGroupSettings() {
+      const list    = document.getElementById('settings-members-list')
+      list.innerHTML = ''
+      const isAdmin = activeGroup.createdBy === currentUser.uid
+
+      ;(activeGroup.members || []).forEach(m => {
+        const div = document.createElement('div')
+        div.className = 'flex items-center gap-3 p-2 rounded-xl'
+        div.innerHTML = `
+          <div class="avatar-sm flex-shrink-0" style="background:${uidToColor(m.uid)}">${getInitials(m.displayName)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold truncate">
+              ${m.uid === currentUser.uid ? 'You' : escHtml(m.displayName)}
+            </div>
+            <div class="text-xs text-slate-500 truncate">
+              ${escHtml(m.email)}${m.pending ? ' · not registered' : ''}${m.role === 'admin' ? ' · Admin' : ''}
+            </div>
+          </div>
+          ${isAdmin && m.uid !== currentUser.uid
+            ? `<button data-remove="${m.uid}"
+                 class="text-xs text-red-400 px-2.5 py-1 rounded-lg soft-card hover:text-red-300 transition-colors flex-shrink-0">
+                 Remove
+               </button>`
+            : ''}
+        `
+        list.appendChild(div)
+      })
+
+      list.querySelectorAll('[data-remove]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          const uid    = btn.getAttribute('data-remove')
+          const member = (activeGroup.members || []).find(m => m.uid === uid)
+          if (!member || !confirm(`Remove ${member.displayName} from this group?`)) return
+          try {
+            const newMembers = activeGroup.members.filter(m => m.uid !== uid)
+            const newUids    = (activeGroup.memberUids || []).filter(u => u !== uid)
+            await updateDoc(doc(db, 'groups', activeGroup.id), { members: newMembers, memberUids: newUids })
+            activeGroup = { ...activeGroup, members: newMembers, memberUids: newUids }
+            renderGroupSettings()
+          } catch (e) { alert('Failed to remove member: ' + e.message) }
+        })
+      )
+    }
+
+    /* ── Add member ── */
+    document.getElementById('add-member-btn').addEventListener('click', async () => {
+      const email  = document.getElementById('add-member-email').value.trim().toLowerCase()
+      const status = document.getElementById('add-member-status')
+
+      if (!email.includes('@')) { showStatus(status, 'Enter a valid email address', false); return }
+      if ((activeGroup.members || []).some(m => m.email === email)) {
+        showStatus(status, 'This email is already a member', false); return
+      }
+
+      const btn = document.getElementById('add-member-btn')
+      btn.disabled = true
+      try {
+        const snap = await getDocs(query(collection(db, 'users'), where('email', '==', email)))
+        let newMember
+        if (!snap.empty) {
+          const u = snap.docs[0].data()
+          newMember = { uid: u.uid, email: u.email, displayName: u.displayName || email.split('@')[0], role: 'member' }
+        } else {
+          const pendingUid = 'pending__' + email.replace(/[^a-z0-9]/g, '_')
+          newMember = { uid: pendingUid, email, displayName: email.split('@')[0], role: 'member', pending: true }
+        }
+
+        const newMembers = [...(activeGroup.members || []), newMember]
+        const newUids    = newMember.pending
+          ? (activeGroup.memberUids || [])
+          : [...(activeGroup.memberUids || []), newMember.uid]
+
+        await updateDoc(doc(db, 'groups', activeGroup.id), { members: newMembers, memberUids: newUids })
+        activeGroup = { ...activeGroup, members: newMembers, memberUids: newUids }
+
+        document.getElementById('add-member-email').value = ''
+        showStatus(status, snap.empty ? '✓ Added (pending sign-up)' : '✓ Member added!', true)
+        renderGroupSettings()
+      } catch (e) {
+        showStatus(status, 'Error: ' + e.message, false)
+      } finally {
+        btn.disabled = false
+      }
+    })
+
+    /* ── Delete group ── */
+    document.getElementById('delete-group-btn').addEventListener('click', async () => {
+      if (activeGroup.createdBy !== currentUser.uid) { alert('Only the admin can delete this group'); return }
+      if (!confirm(`Delete "${activeGroup.name}" and all its expenses? This cannot be undone.`)) return
+      try {
+        const expSnap = await getDocs(collection(db, 'groups', activeGroup.id, 'expenses'))
+        await Promise.all(expSnap.docs.map(d => deleteDoc(d.ref)))
+        await deleteDoc(doc(db, 'groups', activeGroup.id))
+        cleanupListeners()
+        activeGroup = null
+        showScreen('screen-groups-list')
+      } catch (e) { alert('Failed to delete group: ' + e.message) }
+    })
+
+    function showStatus(el, msg, ok) {
+      el.textContent  = msg
+      el.className    = `text-xs mt-2 ${ok ? 'text-green-400' : 'text-red-400'}`
+      el.classList.remove('hidden')
+      setTimeout(() => el.classList.add('hidden'), 3500)
+    }
+
+    /* ── Clear all expenses ── */
+    document.getElementById('clear-all').addEventListener('click', async () => {
+      if (!activeGroup || !confirm('Delete ALL expenses in this group? This cannot be undone.')) return
+      const snap = await getDocs(collection(db, 'groups', activeGroup.id, 'expenses'))
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)))
+    })
+
+    /* ─────────────────────────────────────────────────────────────
+       CALENDAR / MONTH FILTER
+    ───────────────────────────────────────────────────────────── */
     function updateMonthDisplay() {
-      const monthName = selectedDate.toLocaleString('default', { month: 'long' });
-      const year = selectedDate.getFullYear();
-      currentMonthDisplay.textContent = `${monthName} ${year}`;
+      const el = document.getElementById('current-month-display')
+      if (el) el.textContent = selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })
     }
 
-    // Calendar / Month List Logic
     function generateMonthList() {
-      const months = new Set();
-      // Always include current month
-      const now = new Date();
-      months.add(`${now.getFullYear()}-${now.getMonth()}`);
-
+      const months = new Set()
+      const now    = new Date()
+      months.add(`${now.getFullYear()}-${now.getMonth()}`)
       allItems.forEach(item => {
         if (item.createdAt) {
-          const d = item.createdAt.toDate();
-          months.add(`${d.getFullYear()}-${d.getMonth()}`);
+          const d = item.createdAt.toDate()
+          months.add(`${d.getFullYear()}-${d.getMonth()}`)
         }
-      });
+      })
 
-      // Sort months descending
-      const sortedMonths = Array.from(months).sort((a, b) => {
-        const [yA, mA] = a.split('-').map(Number);
-        const [yB, mB] = b.split('-').map(Number);
-        return (yB - yA) || (mB - mA);
-      });
+      const sorted = Array.from(months).sort((a, b) => {
+        const [yA, mA] = a.split('-').map(Number)
+        const [yB, mB] = b.split('-').map(Number)
+        return (yB - yA) || (mB - mA)
+      })
 
-      monthDropdown.innerHTML = '';
-      sortedMonths.forEach(key => {
-        const [year, monthIdx] = key.split('-').map(Number);
-        const date = new Date(year, monthIdx);
-        const label = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-        const btn = document.createElement('button');
-        btn.className = 'w-full text-left px-4 py-2 hover:bg-slate-800 text-sm text-slate-300';
-        btn.textContent = label;
-        if (monthIdx === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
-          btn.classList.add('bg-slate-800', 'text-white', 'font-semibold');
-        }
+      const dropdown = document.getElementById('month-dropdown')
+      dropdown.innerHTML = ''
+      sorted.forEach(key => {
+        const [yr, mo] = key.split('-').map(Number)
+        const label    = new Date(yr, mo).toLocaleString('default', { month: 'long', year: 'numeric' })
+        const isSel    = mo === selectedDate.getMonth() && yr === selectedDate.getFullYear()
+        const btn      = document.createElement('button')
+        btn.className  = `w-full text-left px-4 py-2.5 text-sm transition-colors
+          ${isSel ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:bg-slate-800'}`
+        btn.textContent = label
         btn.addEventListener('click', () => {
-          selectedDate = new Date(year, monthIdx);
-          updateMonthDisplay();
-          applyFilters();
-          monthDropdown.classList.add('hidden');
-        });
-        monthDropdown.appendChild(btn);
-      });
+          selectedDate = new Date(yr, mo)
+          updateMonthDisplay()
+          applyFilters()
+          dropdown.classList.add('hidden')
+        })
+        dropdown.appendChild(btn)
+      })
     }
 
-    calendarBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      monthDropdown.classList.toggle('hidden');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!calendarBtn.contains(e.target) && !monthDropdown.contains(e.target)) {
-        monthDropdown.classList.add('hidden');
-      }
-    });
-
-    // add expense
-    addBtn.addEventListener('click', async () => {
-      const amount = parseFloat(amountInput.value)
-      const note = noteInput.value || ''
-      if (!amount || !currentUser || !friendEmail) { alert('fill amount and friend email'); return }
-      const docRef = await addDoc(collection(db, 'expenses'), {
-        amount, note, ownerUid: currentUser.uid, ownerEmail: currentUser.email, pairId, paid: false, createdAt: serverTimestamp()
-      })
-      amountInput.value = ''
-      noteInput.value = ''
+    document.getElementById('calendar-btn').addEventListener('click', e => {
+      e.stopPropagation()
+      document.getElementById('month-dropdown').classList.toggle('hidden')
     })
 
-    // render and calculations
-    function renderExpenses(items) {
-      const sort = sortSelect.value;
-      // We clone items to avoid mutating the filtered list directly if we were to re-use it
-      let displayItems = [...items];
-
-      if (sort === 'date-asc') displayItems.reverse();
-      if (sort === 'amount-desc') displayItems.sort((a, b) => b.amount - a.amount);
-      if (sort === 'amount-asc') displayItems.sort((a, b) => a.amount - b.amount);
-      if (sort === 'unpaid-first') displayItems.sort((a, b) => (a.paid === b.paid) ? 0 : (a.paid ? 1 : -1));
-
-      const roommate_owes = document.getElementById('roommate-owes');
-      expensesList.innerHTML = '';
-      let total = 0, you = 0, owes = 0;
-
-      displayItems.forEach(it => {
-        owes += it.paid ? 0 : it.ownerEmail === currentUser.email ? it.amount / 2 : -it.amount / 2;
-        roommate_owes.textContent = `₹${owes.toFixed(2)}`;
-
-        // 🌈 Dynamic color update
-        if (owes < 0) {
-          roommate_owes.style.color = 'red';   // You owe less → good → green
-        } else if (owes > 0) {
-          roommate_owes.style.color = 'green';     // You owe more → bad → red
-        } else {
-          roommate_owes.style.color = 'gray';    // Neutral
-        }
-
-        total += it.amount;
-        if (it.ownerEmail === currentUser.email) you += it.amount;
-        const ts = it.createdAt?.toDate ? it.createdAt.toDate() : null;
-        const formatted = ts
-          ? ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
-          : "—";
-        const card = document.createElement('div');
-        card.className = 'soft-card p-3 rounded-xl';
-
-        card.innerHTML = `
-  <div class="flex justify-between items-start"> 
-    <div>
-      <div class="text-sm font-semibold">₹${it.amount.toFixed(2)}</div>
-      <div class="text-xs text-slate-400">${it.note || ''}</div>
-      <div class="text-xxs text-slate-500 mt-1">${formatted}</div>
-      <div class="text-xxs text-slate-500 mt-1">By: ${it.ownerEmail === currentUser.email ? 'You' : it.ownerEmail}</div>
-    </div>
-
-    <div class="text-right text-xs">
-      <div class="mb-2 ${it.paid ? 'text-green-300' : 'text-amber-300'}">${it.paid ? 'Paid' : 'Unpaid'}</div>
-      <div class="flex gap-2">
-        ${it.ownerUid === currentUser.uid
-            ? `<button data-edit=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Edit</button>
-             <button data-delete=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Delete</button>
-             <button data-paid=${it.id} class="px-2 py-1 rounded-md soft-card text-xs">Toggle Paid</button>`
-            : ''
-          }
-      </div>
-    </div>
-  </div>
-`;
-        expensesList.appendChild(card);
-      });
-
-      const friend = total - you
-      const split = total / 2
-      const roommateOwes = Math.round((you - split) * 100) / 100
-
-      totalSpentEl.textContent = `₹${total.toFixed(2)}`
-      yourSpentEl.textContent = `₹${you.toFixed(2)}`
-      friendSpentEl.textContent = `₹${friend.toFixed(2)}`
-
-      // attach event handlers for actions
-      document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', async (e) => {
-        const id = btn.getAttribute('data-delete')
-        if (confirm('Delete this expense?')) {
-          await deleteDoc(doc(db, 'expenses', id))
-        }
-      }))
-
-      document.querySelectorAll('[data-paid]').forEach(btn => btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-paid')
-        const ref = doc(db, 'expenses', id)
-        // toggle paid state (simple read->update flow)
-        // (in real app use transaction)
-        const snap = await getDocs(query(collection(db, 'expenses'), where('__name__', '==', id)))
-        if (!snap.empty) {
-          const data = snap.docs[0].data()
-          await updateDoc(ref, { paid: !data.paid, updatedAt: serverTimestamp() })
-        }
-      }))
-
-      document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-edit')
-        const newNote = prompt('Edit note')
-        const newAmount = prompt('Edit amount')
-        if (newNote !== null && newAmount !== null) {
-          const ref = doc(db, 'expenses', id)
-          await updateDoc(ref, { note: newNote, amount: parseFloat(newAmount), updatedAt: serverTimestamp() })
-        }
-      }))
-    }
-    function populateFriendHistory() {
-      friendHistorySelect.innerHTML = '<option value="">Select from previous friends</option>'
-      const friends = JSON.parse(localStorage.getItem('friendEmails') || '[]')
-      friends.forEach(email => {
-        const opt = document.createElement('option')
-        opt.value = email
-        opt.textContent = email
-        friendHistorySelect.appendChild(opt)
-      })
-    }
-    friendHistorySelect.addEventListener('change', () => {
-      const val = friendHistorySelect.value
-      if (val) {
-        friendEmail = val
-        friendEmailInput.value = val
-        localStorage.setItem('friendEmail', val)
-        friendSaved.classList.remove('hidden')
-        setupExpenseListener()
+    document.addEventListener('click', e => {
+      const dd  = document.getElementById('month-dropdown')
+      const btn = document.getElementById('calendar-btn')
+      if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+        dd.classList.add('hidden')
       }
     })
 
-    // local change of sort
-    sortSelect.addEventListener('change', () => { applyFilters() })
+    document.getElementById('sort').addEventListener('change', applyFilters)
 
+    /* ─────────────────────────────────────────────────────────────
+       HELPERS
+    ───────────────────────────────────────────────────────────── */
+    function getInitials(name) {
+      if (!name) return '?'
+      return name.trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2)
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    const PALETTE = [
+      '#6366f1','#8b5cf6','#a855f7','#ec4899',
+      '#f97316','#eab308','#10b981','#14b8a6',
+      '#3b82f6','#06b6d4','#ef4444','#84cc16'
+    ]
+    function uidToColor(uid = '') {
+      let h = 0
+      for (let i = 0; i < uid.length; i++) h = ((h << 5) - h + uid.charCodeAt(i)) | 0
+      return PALETTE[Math.abs(h) % PALETTE.length]
+    }
   </script>
-
-  <!-- 🚨 Fallback for Older Browsers (no modules support) -->
-  <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script nomodule src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <!-- <script nomodule>
-  // Firebase config
-  var firebaseConfig = {
-  apiKey: "AIzaSyDpFFj5yl9cT_g53-v9Yt5XJdzcd3QFlPs",
-  authDomain: "dhansplit.firebaseapp.com",
-  projectId: "dhansplit",
-  storageBucket: "dhansplit.firebasestorage.app",
-  messagingSenderId: "1042555508326",
-  appId: "1:1042555508326:web:f43de6b0568e4ae479bfa7",
-  measurementId: "G-X8QMR709D2"
-};
-
-  // Initialize Firebase (v8 style)
-  firebase.initializeApp(firebaseConfig);
-  var auth = firebase.auth();
-
-  console.log("Loaded with nomodule fallback 🚀");
-</script> -->
 </body>
-
 </html>
