@@ -440,6 +440,15 @@
       </div>
     </section>
 
+    <!-- Temporary Migration Feature -->
+    <div id="migration-container" class="hidden mt-8 pt-4 border-t border-slate-800/70 text-center">
+      <p class="text-xs text-slate-500 mb-2">Have expenses from the old version? Recover them here.</p>
+      <button id="recover-old-data-btn" class="px-4 py-2 rounded-xl border border-dashed border-slate-700 hover:border-indigo-500 hover:text-indigo-400 text-xs text-slate-400 font-semibold transition-colors duration-200">
+        🔄 Recover Old Data
+      </button>
+      <p id="migration-status" class="text-xs mt-2 hidden"></p>
+    </div>
+
   </main><!-- /main -->
 
   <!-- ══════════════════════════════════════════
@@ -629,6 +638,16 @@
         target.classList.remove('hidden')
         void target.offsetWidth          // reflow → restart animation
         target.classList.add('screen-enter')
+      }
+
+      // Hide migration container on auth screen or if no user is signed in
+      const migrationEl = document.getElementById('migration-container')
+      if (migrationEl) {
+        if (id === 'screen-auth' || !currentUser) {
+          migrationEl.classList.add('hidden')
+        } else {
+          migrationEl.classList.remove('hidden')
+        }
       }
     }
 
@@ -1822,6 +1841,201 @@
     })
 
     document.getElementById('sort').addEventListener('change', applyFilters)
+
+    /* ── Recover Old Data (Migration Helper) ── */
+    async function recoverOldExpenses() {
+      const btn = document.getElementById('recover-old-data-btn')
+      const statusEl = document.getElementById('migration-status')
+
+      btn.disabled = true
+      btn.textContent = '🔄 Recovering...'
+      statusEl.classList.remove('hidden')
+      statusEl.textContent = 'Scanning old records...'
+      statusEl.className = 'text-xs mt-2 text-slate-400'
+
+      try {
+        // 1. Fetch all old expenses from the top-level collection
+        const oldSnap = await getDocs(collection(db, 'expenses'))
+        if (oldSnap.empty) {
+          statusEl.textContent = 'No old expenses found.'
+          statusEl.className = 'text-xs mt-2 text-amber-400 font-medium'
+          btn.disabled = false
+          btn.textContent = '🔄 Recover Old Data'
+          return
+        }
+
+        // 2. Filter for expenses relevant to the logged-in user
+        const userEmail = currentUser.email.toLowerCase().trim()
+        const oldExpenses = oldSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(exp => {
+            if (exp.pairId) {
+              const emails = exp.pairId.split('_').map(e => e.toLowerCase().trim())
+              return emails.includes(userEmail)
+            }
+            return (
+              (exp.ownerEmail && exp.ownerEmail.toLowerCase().trim() === userEmail) ||
+              exp.ownerUid === currentUser.uid
+            )
+          })
+
+        if (oldExpenses.length === 0) {
+          statusEl.textContent = 'No old expenses found for your account.'
+          statusEl.className = 'text-xs mt-2 text-amber-400 font-medium'
+          btn.disabled = false
+          btn.textContent = '🔄 Recover Old Data'
+          return
+        }
+
+        statusEl.textContent = `Found ${oldExpenses.length} old expense(s). Migrating...`
+
+        // 3. Fetch current user groups
+        const groupsSnap = await getDocs(
+          query(collection(db, 'groups'), where('memberUids', 'array-contains', currentUser.uid))
+        )
+        const userGroups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+        // 4. Map each expense to a friend and verify group association
+        let groupMap = {} // friendEmail -> groupId
+        let processedCount = 0
+        let createdGroupsCount = 0
+
+        for (const exp of oldExpenses) {
+          let friendEmail = ''
+          if (exp.pairId) {
+            const emails = exp.pairId.split('_').map(e => e.toLowerCase().trim())
+            friendEmail = emails.find(e => e !== userEmail) || ''
+          }
+          if (!friendEmail) {
+            friendEmail = 'unknown_friend@example.com'
+          }
+
+          let groupId = groupMap[friendEmail]
+
+          if (!groupId) {
+            // Find existing group of exactly these 2 members (currentUser and friendEmail)
+            const matchingGroup = userGroups.find(g => {
+              const members = g.members || []
+              if (members.length !== 2) return false
+              const emails = members.map(m => m.email.toLowerCase().trim())
+              return emails.includes(userEmail) && emails.includes(friendEmail)
+            })
+
+            if (matchingGroup) {
+              groupId = matchingGroup.id
+              groupMap[friendEmail] = groupId
+            } else {
+              // Create a new 2-person group for this pair
+              statusEl.textContent = `Creating group for ${friendEmail}...`
+              
+              // Find friend profile if they exist in /users
+              const friendUserSnap = await getDocs(
+                query(collection(db, 'users'), where('email', '==', friendEmail))
+              )
+              let friendMember
+              if (!friendUserSnap.empty) {
+                const u = friendUserSnap.docs[0].data()
+                friendMember = {
+                  uid: u.uid,
+                  email: u.email,
+                  displayName: u.displayName || friendEmail.split('@')[0],
+                  role: 'member'
+                }
+              } else {
+                const pendingUid = 'pending__' + friendEmail.replace(/[^a-z0-9]/g, '_')
+                friendMember = {
+                  uid: pendingUid,
+                  email: friendEmail,
+                  displayName: friendEmail.split('@')[0],
+                  role: 'member',
+                  pending: true
+                }
+              }
+
+              const newMembers = [
+                {
+                  uid: currentUser.uid,
+                  email: currentUser.email.toLowerCase(),
+                  displayName: currentUser.displayName || currentUser.email.split('@')[0],
+                  role: 'admin'
+                },
+                friendMember
+              ]
+
+              const newMemberUids = [currentUser.uid]
+              if (!friendMember.pending) {
+                newMemberUids.push(friendMember.uid)
+              }
+
+              const groupName = `Recovered: ${friendMember.displayName}`
+              const groupDocRef = await addDoc(collection(db, 'groups'), {
+                name: groupName,
+                createdBy: currentUser.uid,
+                createdAt: serverTimestamp(),
+                members: newMembers,
+                memberUids: newMemberUids
+              })
+
+              groupId = groupDocRef.id
+              groupMap[friendEmail] = groupId
+              createdGroupsCount++
+            }
+          }
+
+          // 5. Build and save the group expense record
+          const isOwner = exp.ownerUid === currentUser.uid || (exp.ownerEmail && exp.ownerEmail.toLowerCase().trim() === userEmail)
+          
+          // Resolve friend uid to map splitParticipants and paidBy
+          const friendUserSnapForPayer = await getDocs(
+            query(collection(db, 'users'), where('email', '==', friendEmail))
+          )
+          const friendUid = !friendUserSnapForPayer.empty 
+            ? friendUserSnapForPayer.docs[0].data().uid 
+            : ('pending__' + friendEmail.replace(/[^a-z0-9]/g, '_'))
+
+          const finalPayerUid = isOwner ? currentUser.uid : friendUid
+          const finalPayerName = isOwner 
+            ? (currentUser.displayName || currentUser.email.split('@')[0]) 
+            : (!friendUserSnapForPayer.empty ? (friendUserSnapForPayer.docs[0].data().displayName || friendEmail.split('@')[0]) : friendEmail.split('@')[0])
+
+          const migratedExpense = {
+            amount: exp.amount || 0,
+            note: exp.note || 'Recovered Expense',
+            paidBy: finalPayerUid,
+            paidByEmail: isOwner ? currentUser.email : friendEmail,
+            paidByName: finalPayerName,
+            ownerUid: exp.ownerUid || currentUser.uid,
+            ownerEmail: exp.ownerEmail || currentUser.email,
+            splitType: 'equal',
+            splitAmong: [currentUser.uid, friendUid],
+            splits: {},
+            paid: exp.paid || false,
+            createdAt: exp.createdAt || serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }
+
+          // Save to group expenses subcollection
+          await addDoc(collection(db, 'groups', groupId, 'expenses'), migratedExpense)
+
+          // Delete from top-level expenses
+          await deleteDoc(doc(db, 'expenses', exp.id))
+          processedCount++
+        }
+
+        statusEl.textContent = `✓ Successfully recovered ${processedCount} expense(s) into ${createdGroupsCount + Object.keys(groupMap).length} group(s)!`
+        statusEl.className = 'text-xs mt-2 text-green-400 font-medium'
+        loadUserGroups()
+      } catch (err) {
+        console.error('Migration error:', err)
+        statusEl.textContent = `Error: ${err.message}`
+        statusEl.className = 'text-xs mt-2 text-red-400 font-medium'
+      } finally {
+        btn.disabled = false
+        btn.textContent = '🔄 Recover Old Data'
+      }
+    }
+
+    document.getElementById('recover-old-data-btn').addEventListener('click', recoverOldExpenses)
 
     /* ─────────────────────────────────────────────────────────────
        HELPERS
